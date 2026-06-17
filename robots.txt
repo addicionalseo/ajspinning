@@ -1,0 +1,11 @@
+User-agent: Mediapartners-Google
+Disallow:
+
+User-agent: *
+Allow: /
+Disallow: /scripts/
+Disallow: /data/
+Disallow: /tmp/
+Disallow: /out/
+
+Sitemap: https://ajspinning.com/sitemap.xml
