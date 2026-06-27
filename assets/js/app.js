@@ -84,6 +84,35 @@ function initBackToTop() {
 
 initBackToTop();
 
+// ─── Microanimaciones al hacer scroll (IntersectionObserver) ───
+function initRevealOnScroll() {
+  const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const targets = document.querySelectorAll(
+    ".product-card, .guide-card, .guide-card-full, .resource-card, .cat-card, .path-card, .season-card, .trust-card, .signal-card, .learning-card, .fact-card, .page-network-card, .photo-card, .choose-card, .material-card, .brand-card"
+  );
+  if (reduceMotion || !("IntersectionObserver" in window) || !targets.length) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-visible");
+          observer.unobserve(entry.target);
+        }
+      });
+    },
+    { threshold: 0.12, rootMargin: "0px 0px -40px 0px" }
+  );
+
+  targets.forEach((el, index) => {
+    el.classList.add("reveal");
+    el.style.transitionDelay = `${Math.min(index % 6, 5) * 50}ms`;
+    observer.observe(el);
+  });
+}
+
+initRevealOnScroll();
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -3389,4 +3418,76 @@ function hydrateCastGame(root) {
 }
 
 document.querySelectorAll("[data-cast-game-root]").forEach(hydrateCastGame);
+
+// ─── Header scroll state (glass effect) ────────────
+(function () {
+  var header = document.querySelector(".site-header");
+  if (!header) return;
+  function updateHeader() {
+    header.classList.toggle("is-scrolled", window.scrollY > 24);
+  }
+  updateHeader();
+  window.addEventListener("scroll", updateHeader, { passive: true });
+}());
+
+// ─── Scroll reveal para tarjetas ────────────────────
+(function () {
+  if (!("IntersectionObserver" in window)) return;
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+  var selector = [
+    ".guide-card", ".guide-card-full",
+    ".photo-card", ".material-card",
+    ".cat-card", ".choose-card",
+    ".path-card", ".resource-card",
+    ".season-card", ".trust-card",
+    ".brand-card", ".learning-card",
+    ".signal-card", ".library-pillar"
+  ].join(",");
+
+  var els = document.querySelectorAll(selector);
+  if (!els.length) return;
+
+  var observer = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("is-visible");
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.07, rootMargin: "0px 0px -32px 0px" });
+
+  requestAnimationFrame(function () {
+    els.forEach(function (el, i) {
+      el.classList.add("reveal");
+      el.style.transitionDelay = Math.min(i % 6 * 55, 280) + "ms";
+      observer.observe(el);
+    });
+  });
+}());
+
+// Scroll reveal para [data-reveal] y .section-title
+(function () {
+  if (!('IntersectionObserver' in window)) return;
+  var revealObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('revealed');
+        revealObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  var titleObs = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('in-view');
+        titleObs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.3 });
+
+  document.querySelectorAll('[data-reveal]').forEach(function (el) { revealObs.observe(el); });
+  document.querySelectorAll('.section-title').forEach(function (el) { titleObs.observe(el); });
+}());
 

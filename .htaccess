@@ -8,5 +8,9 @@ RewriteRule ^ https://ajspinning.com%{REQUEST_URI} [L,R=301]
 # Fix old category typo and keep a clean canonical URL
 RewriteRule ^categoria/senueulos/?$ https://ajspinning.com/categoria/senuelos/ [L,R=301]
 
+# Fix old guide slug typos ("señuelos" misspelled with an extra u)
+RewriteRule ^guia/mejores-senueulos-lubina/?$ https://ajspinning.com/guia/mejores-senuelos-lubina/ [L,R=301]
+RewriteRule ^guia/mejores-senueulos-lucio/?$ https://ajspinning.com/guia/mejores-senuelos-lucio/ [L,R=301]
+
 # Prevent directory listing
 Options -Indexes

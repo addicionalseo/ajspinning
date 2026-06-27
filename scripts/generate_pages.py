@@ -15,12 +15,21 @@ GUIA_DIR  = ROOT / "guia"
 OUT_DIR   = ROOT / "out"
 SITEMAP   = ROOT / "sitemap.xml"
 
+# El slug interno "senueulos" viene de CATEGORIES/products.json (no se tocan).
+# La URL pública corrige el typo: /categoria/senuelos/. El antiguo /categoria/senueulos/
+# se redirige con 301 desde .htaccess.
+CATEGORY_SLUG_ALIASES = {"senueulos": "senuelos"}
+
+
+def category_url_slug(slug):
+    return CATEGORY_SLUG_ALIASES.get(slug, slug)
+
 BASE_URL  = SITE_CONFIG["base_url"]
 SITE_NAME = SITE_CONFIG["site_name"]
 TODAY     = time.strftime("%Y-%m-%d")
 YEAR      = time.strftime("%Y")
-CSS_ASSET_VERSION = "20260611-1"
-JS_ASSET_VERSION = "20260610-2"
+CSS_ASSET_VERSION = "20260618-1"
+JS_ASSET_VERSION = "20260618-1"
 DEFAULT_ROBOTS = "index,follow,max-image-preview:large"
 PRODUCT_ROBOTS = "noindex,nofollow,max-image-preview:large"
 SHOP_ROBOTS = "noindex,follow,max-image-preview:large"
@@ -84,6 +93,52 @@ EDITORIAL_TEAM = {
     ),
 }
 
+# ─── Iconos SVG (stroke, sin emojis) ─────────────────────────────────────────
+
+ICONS = {
+    "check": '<path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>',
+    "lightbulb": '<path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    "alert-triangle": '<path d="M12 3 22 20H2L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r=".9" fill="currentColor"/>',
+    "cart": '<circle cx="9" cy="20" r="1.3" fill="currentColor"/><circle cx="17" cy="20" r="1.3" fill="currentColor"/><path d="M3 4h2l2.2 11.4a1.6 1.6 0 0 0 1.6 1.3h7.6a1.6 1.6 0 0 0 1.6-1.3L20 8H6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    "star": '<path d="M12 3.5 14.6 9l6 .9-4.3 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.9l6-.9L12 3.5Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/>',
+    "truck": '<path d="M2 8h11v8H2zM13 11h4l3 3v2h-7z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><circle cx="6" cy="18" r="1.6" stroke="currentColor" stroke-width="1.4"/><circle cx="16.5" cy="18" r="1.6" stroke="currentColor" stroke-width="1.4"/>',
+    "calendar": '<rect x="3.5" y="5" width="17" height="15.5" rx="1.6" stroke="currentColor" stroke-width="1.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>',
+    "refresh": '<path d="M20 11a8 8 0 0 0-14.9-3.5M4 13a8 8 0 0 0 14.9 3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M5 4v4h4M19 20v-4h-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    "clock": '<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3.2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    "menu": '<path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    "sun": '<circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6"/><path d="M12 2.5v3M12 18.5v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2.5 12h3M18.5 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    "moon": '<path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    "info": '<circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 11v5M12 8v.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>',
+    "book": '<path d="M4 5.5C5.5 4.7 8 4.3 12 5.3 16 4.3 18.5 4.7 20 5.5v13c-1.5-.8-4-1.2-8-.2-4-1-6.5-.6-8 .2v-13Z M12 5.3v13" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    "lure": '<path d="M12 3 19 12 12 21 5 12Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>',
+    "reel": '<circle cx="12" cy="12" r="7" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="2.2" stroke="currentColor" stroke-width="1.6"/><path d="M12 5v2M12 17v2M5 12h2M17 12h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>',
+    "rod": '<path d="M4 20 19 5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="19" cy="5" r="1.4" stroke="currentColor" stroke-width="1.4"/><circle cx="13.5" cy="10.5" r="1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor"/>',
+    "combo": '<rect x="4" y="8" width="16" height="11" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 12h16M9 8V6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    "line": '<path d="M3 9c2 0 2 3 4 3s2-3 4-3 2 3 4 3 2-3 4-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M3 16c2 0 2 3 4 3s2-3 4-3 2 3 4 3 2-3 4-3" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" opacity=".5"/>',
+    "hook": '<path d="M9 4v9a3.5 3.5 0 1 0 7 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="9" cy="4" r="1.3" stroke="currentColor" stroke-width="1.4"/>',
+    "toolbox": '<rect x="3" y="9" width="18" height="10" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 9V7a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2M3 13h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>',
+    "facebook": '<path d="M14 21v-7h2.4l.4-3H14V9c0-.9.2-1.5 1.6-1.5H17V4.8c-.3 0-1.4-.1-2.6-.1-2.6 0-4.4 1.6-4.4 4.5V11H7.5v3H10v7Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>',
+    "twitter": '<path d="M21 6.4c-.7.3-1.4.6-2.2.7.8-.5 1.4-1.2 1.7-2.1-.8.4-1.6.8-2.5 1-.7-.8-1.7-1.3-2.9-1.3-2.2 0-3.9 1.8-3.9 3.9 0 .3 0 .6.1.9-3-.2-5.7-1.6-7.5-3.9-.3.5-.5 1.1-.5 1.8 0 1.4.7 2.5 1.8 3.2-.6 0-1.2-.2-1.7-.4 0 1.9 1.4 3.5 3.2 3.9-.3.1-.7.1-1.1.1-.3 0-.5 0-.8-.1.5 1.6 2 2.7 3.8 2.8-1.4 1.1-3.1 1.7-5 1.7-.3 0-.6 0-1-.1 1.8 1.2 4 1.8 6.3 1.8 7.5 0 11.7-6.3 11.7-11.7v-.5c.8-.6 1.5-1.3 2-2.1Z" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>',
+    "instagram": '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5" stroke="currentColor" stroke-width="1.5"/><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.5"/><circle cx="17.2" cy="6.8" r="1" fill="currentColor"/>',
+}
+
+CATEGORY_ICON_NAME = {
+    "senueulos": "lure",
+    "senuelos": "lure",
+    "carretes": "reel",
+    "canas": "rod",
+    "combos": "combo",
+    "hilos": "line",
+    "anzuelos": "hook",
+    "accesorios": "toolbox",
+}
+
+
+def icon(name, cls=""):
+    path = ICONS.get(name, "")
+    cls_attr = f' class="{cls}"' if cls else ""
+    return f'<svg{cls_attr} viewBox="0 0 24 24" fill="none" aria-hidden="true">{path}</svg>'
+
 # ─── Contenido editorial por categoría ───────────────────────────────────────
 
 CATEGORY_CONTENT = {
@@ -105,7 +160,7 @@ CATEGORY_CONTENT = {
 <p>El minnow imita un pez pequeño herido. Los modelos <strong>flotantes</strong> son perfectos para aguas someras y para lucio en zonas con vegetación. Los <strong>hundidos</strong> permiten trabajar a media agua o fondo. Son los señuelos más populares en España para lubina, lucio y trucha.</p>
 
 <div class="tip-box">
-  <div class="tip-box-title">✅ Consejo para principiantes</div>
+  <div class="tip-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Consejo para principiantes</div>
   <p>Empieza con 2–3 minnows de 7–9 cm: uno en color plata, uno en colores naturales (perca o trucha) y uno en chartreuse. Con estos tres cubres el 80% de las situaciones.</p>
 </div>
 
@@ -119,7 +174,7 @@ CATEGORY_CONTENT = {
 <p>Las <strong>paletas giratorias</strong> del spinnerbait generan vibración y destellos que atraen peces incluso en aguas turbias. Los <strong>poppers</strong> trabajan en superficie y producen las picadas más espectaculares del spinning: ver al pez romper el agua para atacar el señuelo es una experiencia única.</p>
 
 <div class="pro-tip">
-  <div class="pro-tip-title">💡 Regla de color</div>
+  <div class="pro-tip-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Regla de color</div>
   <p><strong>Agua clara = colores naturales</strong> (plata, dorado, verde). <strong>Agua turbia o poca luz = colores vivos</strong> (chartreuse, naranja, rojo). Para lubina en el mar, el plateado imitando boquerón es siempre una apuesta segura.</p>
 </div>
 
@@ -137,7 +192,7 @@ CATEGORY_CONTENT = {
 </table>
 
 <div class="warning-box">
-  <div class="warning-box-title">⚠️ Sobre los anzuelos de señuelos baratos</div>
+  <div class="warning-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 22 20H2L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></svg> Sobre los anzuelos de señuelos baratos</div>
   <p>Los señuelos económicos de AliExpress son excelentes, pero sus anzuelos triples suelen ser blandos. Considera sustituirlos por anzuelos Owner o Gamakatsu (1–2 € por unidad) para mejorar el ratio de captura y la resistencia al forzar al pez.</p>
 </div>
 
@@ -178,17 +233,17 @@ CATEGORY_CONTENT = {
 </table>
 
 <div class="tip-box">
-  <div class="tip-box-title">✅ Para empezar en España</div>
+  <div class="tip-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Para empezar en España</div>
   <p>La talla 2500 o 3000 es la más versátil. Sirve para lucio en embalse, lubina costera y la mayoría de situaciones en ríos medianos. Si solo vas a comprar un carrete, elige este rango.</p>
 </div>
 
 <div class="content-divider"><span>Ratio y rodamientos</span></div>
 
 <h3>Relación de recuperación (ratio)</h3>
-<p>El ratio indica cuántas vueltas de línea recoge el carrete por cada vuelta de manivela. Un ratio <strong>5.2:1</strong> es lento y potente —ideal para crankbaits y swimbaits que necesitan trabajarse despacio—. El <strong>6.2:1</strong> es el más versátil. Los ratios <strong>7.0:1 o superiores</strong> permiten recuperaciones rápidas, ideales para jigging.</p>
+<p>El ratio indica cuántas vueltas de línea recoge el carrete por cada vuelta de manivela. Un ratio <strong>5.2:1</strong> es lento y potente, ideal para crankbaits y swimbaits que necesitan trabajarse despacio. El <strong>6.2:1</strong> es el más versátil. Los ratios <strong>7.0:1 o superiores</strong> permiten recuperaciones rápidas, ideales para jigging.</p>
 
 <div class="pro-tip">
-  <div class="pro-tip-title">💡 La trampa de los rodamientos</div>
+  <div class="pro-tip-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> La trampa de los rodamientos</div>
   <p>Más rodamientos no siempre significa mejor carrete. Un carrete con 5 rodamientos de acero inoxidable de calidad supera a uno con 12 rodamientos baratos. Busca al menos <strong>5+1 BB</strong> y verifica que sean de acero inoxidable para resistir la humedad.</p>
 </div>
 
@@ -196,7 +251,7 @@ CATEGORY_CONTENT = {
 <p>El <strong>freno delantero</strong> es más preciso y recomendable para spinning activo. El <strong>freno trasero</strong> es más cómodo de ajustar al vuelo pero menos preciso. Para peces grandes como siluro o grandes lucios, asegúrate de que el drag máximo sea de al menos 8 kg. La mayoría de carretes de AliExpress en talla 3000+ superan este valor.</p>
 
 <div class="warning-box">
-  <div class="warning-box-title">⚠️ Mantenimiento imprescindible</div>
+  <div class="warning-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3 22 20H2L12 3Z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M12 10v4" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><circle cx="12" cy="17" r=".9" fill="currentColor"/></svg> Mantenimiento imprescindible</div>
   <p>Si pescas en el mar, enjuaga siempre el carrete con agua dulce al terminar la jornada. La sal destruye los rodamientos rápidamente. Una gota de aceite específico en el eje principal al inicio de cada temporada dobla la vida útil del carrete.</p>
 </div>
 """,
@@ -226,7 +281,7 @@ CATEGORY_CONTENT = {
 <p>La longitud más versátil para spinning en ríos y embalses es entre <strong>2,10 m y 2,40 m</strong>. Cañas más cortas (1,80 m) aportan precisión en zonas con obstáculos. Cañas más largas (2,70–3,00 m) para embalses grandes o surfcasting donde necesitas máxima distancia de lanzado.</p>
 
 <div class="tip-box">
-  <div class="tip-box-title">✅ La caña todo-terreno española</div>
+  <div class="tip-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> La caña todo-terreno española</div>
   <p>Una caña de 2,40 m, acción fast o medium-fast, potencia ML (5–21 g) sirve para el 90% de situaciones: lucio en embalse, lubina desde costa, trucha en río grande y perca. Si solo vas a comprar una caña, elige este perfil.</p>
 </div>
 
@@ -257,7 +312,7 @@ CATEGORY_CONTENT = {
 <p>Las cañas de <strong>carbono</strong> son ligeras y muy sensibles, ideales para spinning activo. Las de <strong>fibra de vidrio</strong> son más resistentes al impacto, buenas para crankbaits lentos. Las <strong>telescópicas</strong> son cómodas de transportar pero tienen peor acción que las de 2 secciones.</p>
 
 <div class="pro-tip">
-  <div class="pro-tip-title">💡 Cañas telescópicas de AliExpress</div>
+  <div class="pro-tip-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Cañas telescópicas de AliExpress</div>
   <p>Marcas como Biutifu, Phishger o CEMREO ofrecen cañas telescópicas de carbono de buena calidad a precios muy bajos. Son ideales para viajeros, senderistas que pescan en alta montaña o como caña de repuesto. Para pesca seria con señuelos activos, una caña de 2 secciones ofrece mejor acción y sensibilidad.</p>
 </div>
 """,
@@ -286,7 +341,7 @@ CATEGORY_CONTENT = {
 <p>Una buena caja de aparejos con <strong>compartimentos ajustables</strong> es fundamental para tener los señuelos organizados y protegidos. Lo ideal es tener una caja grande para casa y una más pequeña de 12–24 compartimentos para llevar al río. Las cajas de AliExpress con cierre hermético ofrecen excelente protección ante agua y polvo.</p>
 
 <div class="tip-box">
-  <div class="tip-box-title">✅ Organización por tipo</div>
+  <div class="tip-box-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Organización por tipo</div>
   <p>Agrupa los señuelos por tipo en tu caja: fila 1 minnows pequeños, fila 2 minnows grandes, fila 3 crankbaits, fila 4 jigs. Así encuentras lo que buscas en segundos sin rebuscar en campo.</p>
 </div>
 
@@ -302,7 +357,7 @@ CATEGORY_CONTENT = {
 <p>Imprescindibles para desclavar anzuelos del pez de forma segura y sin dañarlo. Los alicates multiusos de pesca sirven también para partir hilo, aplastar aristas de anzuelos en pesca sin muerte y ajustar mosquetones. Un modelo de 15–20 cm con funda es suficiente.</p>
 
 <div class="pro-tip">
-  <div class="pro-tip-title">💡 Kit mínimo de campo (menos de 15 €)</div>
+  <div class="pro-tip-title"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .8 1.6v.5h5.4v-.5c0-.6.3-1.2.8-1.6A6 6 0 0 0 12 3Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg> Kit mínimo de campo (menos de 15 €)</div>
   <p>Para una jornada sin sustos: 1 caja pequeña, surtido de giratorios talla 10–14, 6–10 anzuelos triples de repuesto, 2 metros de fluorocarbono 0,25 mm y unos alicates básicos. Todo esto cabe en un bolsillo y cuesta menos de 15 € desde AliExpress.</p>
 </div>
 
@@ -421,7 +476,7 @@ GUIDES = [
 """
     },
     {
-        "slug": "mejores-senueulos-lucio",
+        "slug": "mejores-senuelos-lucio",
         "title": "Mejores Señuelos para Lucio: Guía 2026 para España",
         "description": "Descubre los mejores señuelos para pescar lucio en España: minnows, jerkbaits, swimbaits y crankbaits. Técnicas, tamaños y colores que funcionan en ríos y embalses.",
         "date": "2026-02-01",
@@ -459,7 +514,7 @@ GUIDES = [
 """
     },
     {
-        "slug": "mejores-senueulos-lubina",
+        "slug": "mejores-senuelos-lubina",
         "title": "Mejores Señuelos para Lubina: Guía de Pesca en España",
         "description": "Los mejores señuelos artificiales para pescar lubina y corvina en España. Técnicas, zonas de pesca y consejos para la lubina desde costa rocosa y playa.",
         "date": "2026-02-15",
@@ -1154,7 +1209,7 @@ GUIDES = [
 
 <h2>Las especies clave de spinning en España, una por una</h2>
 <h3>Lucio</h3>
-<p>El lucio es la gran escuela del spinning de embalse. Premia el trabajo sobre estructura, cambios de profundidad, vegetación, puntas batidas por viento y entradas de agua. En primavera y otoño suele dar ventanas excelentes; en verano obliga a hilar más fino con sombras y capas profundas; en invierno pide pausa y control. Si quieres una base de señuelos concreta, la guía de <a href="/guia/mejores-senueulos-lucio/" style="color:var(--c-primary)">mejores señuelos para lucio</a> sigue siendo la referencia natural.</p>
+<p>El lucio es la gran escuela del spinning de embalse. Premia el trabajo sobre estructura, cambios de profundidad, vegetación, puntas batidas por viento y entradas de agua. En primavera y otoño suele dar ventanas excelentes; en verano obliga a hilar más fino con sombras y capas profundas; en invierno pide pausa y control. Si quieres una base de señuelos concreta, la guía de <a href="/guia/mejores-senuelos-lucio/" style="color:var(--c-primary)">mejores señuelos para lucio</a> sigue siendo la referencia natural.</p>
 
 <h3>Trucha</h3>
 <p>La trucha exige otro tipo de pescador: más silencioso, más preciso y más fino con el tamaño del señuelo. Aquí importan mucho la corriente, el ángulo de entrada, la sombra, las posturas del pez y el control del señuelo en deriva o contracorriente. No necesita cajas enormes; necesita lectura de agua y ajuste fino. Es una de las mejores especies para aprender spinning ligero de verdad.</p>
@@ -1229,7 +1284,7 @@ GUIDES = [
 
 <h2>Lucio: la especie que mejor enseña a leer un embalse</h2>
 <p>El lucio es probablemente la especie más completa para entender el spinning interior en España. No porque siempre sea fácil, sino porque obliga a trabajar muchos conceptos útiles: viento, estructura, vegetación, pez pasto, cambios de profundidad, entradas de agua y pausas. Quien aprende a buscar lucio con cabeza suele mejorar también con otras especies.</p>
-<p>Lo normal es encontrarlo en embalses y aguas con clara lógica de emboscada. En primavera y otoño da jornadas muy agradecidas. En verano se vuelve más de sombra, horas cortas y capas profundas. En invierno la pausa gana muchísimo peso. Si tu prioridad es esta especie, enlaza esta lectura con <a href="/guia/mejores-senueulos-lucio/" style="color:var(--c-primary)">la guía específica de señuelos para lucio</a>.</p>
+<p>Lo normal es encontrarlo en embalses y aguas con clara lógica de emboscada. En primavera y otoño da jornadas muy agradecidas. En verano se vuelve más de sombra, horas cortas y capas profundas. En invierno la pausa gana muchísimo peso. Si tu prioridad es esta especie, enlaza esta lectura con <a href="/guia/mejores-senuelos-lucio/" style="color:var(--c-primary)">la guía específica de señuelos para lucio</a>.</p>
 
 <h2>Trucha: precisión, ángulo y control del señuelo</h2>
 <p>La trucha exige menos volumen de equipo y más lectura fina. Aquí no suele ganar quien hace más ruido o quien cambia más de señuelo, sino quien entiende bien la corriente, entra desde buen ángulo y pasa el señuelo por la capa exacta donde el pez está cómodo. Es una especie perfecta para aprender a pescar “limpio”.</p>
@@ -1301,7 +1356,7 @@ GUIDES = [
 
 <h2>Lubina: la gran especie escuela del spinning de costa</h2>
 <p>La lubina es la especie que mejor resume el spinning marino español porque enseña casi todo: lectura de espuma, canales, desembocaduras, marea, viento, actividad del pez pasto y adaptación de señuelo según luz y profundidad. No exige un único estilo. A veces se pesca arriba con paseante; otras veces manda el minnow; otras, un vinilo bien llevado junto al fondo.</p>
-<p>También es la especie más lógica para empezar si pescas desde costa. Tiene presencia amplia, admite muchos enfoques y te obliga a aprender a leer el mar de verdad. Por eso siguen siendo clave nuestras guías de <a href="/guia/mejores-senueulos-lubina/" style="color:var(--c-primary)">señuelos para lubina</a> y de <a href="/guia/spinning-costa-espuma-mareas/" style="color:var(--c-primary)">espuma, mareas y viento</a>.</p>
+<p>También es la especie más lógica para empezar si pescas desde costa. Tiene presencia amplia, admite muchos enfoques y te obliga a aprender a leer el mar de verdad. Por eso siguen siendo clave nuestras guías de <a href="/guia/mejores-senuelos-lubina/" style="color:var(--c-primary)">señuelos para lubina</a> y de <a href="/guia/spinning-costa-espuma-mareas/" style="color:var(--c-primary)">espuma, mareas y viento</a>.</p>
 
 <h2>Baila: la prima cercana que muchas veces salva la jornada</h2>
 <p>La baila aparece menos en titulares pero merece bastante más atención. Comparte muchas cosas con la lubina, aunque suele moverse en tamaños menores y en escenarios algo más calmados o cercanos a puerto y desembocadura. Para quien empieza en costa, puede ser una especie muy agradecida porque responde bien a minnows pequeños, vinilos discretos y recogidas nada exageradas.</p>
@@ -1589,7 +1644,7 @@ GUIDES = [
 <p>Mi recomendación es sencilla y muy de pescador práctico: <strong>guarda un PDF en el móvil, una copia en la nube y otra descargada sin conexión</strong>. Si además llevas una captura del justificante o el CSV de verificación, mejor. No da peces, pero sí evita que una mañana buena se convierta en un viaje inútil.</p>
 
 <h2>Mi consejo para quien empieza a spinning en España</h2>
-<p>Si estás arrancando, no intentes resolver todo a la vez. Primero elige <strong>tu escenario principal</strong>: embalse, río o costa. Después saca la licencia correcta. Y solo entonces empieza a afinar el equipo. Hacerlo al revés —comprar caña, carrete, señuelos y descubrir después que te falta documentación— es la secuencia más cara y menos elegante de todas.</p>
+<p>Si estás arrancando, no intentes resolver todo a la vez. Primero elige <strong>tu escenario principal</strong>: embalse, río o costa. Después saca la licencia correcta. Y solo entonces empieza a afinar el equipo. Hacerlo al revés (comprar caña, carrete, señuelos y descubrir después que te falta documentación) es la secuencia más cara y menos elegante de todas.</p>
 <p>Si quieres hilar fino la parte técnica después de resolver papeleo, te recomiendo esta ruta: <a href="/guia/spinning-para-principiantes/" style="color:var(--c-primary)">empezar por la guía de spinning para principiantes</a>, seguir por <a href="/guia/como-elegir-senuelo-segun-agua-y-clima/" style="color:var(--c-primary)">cómo elegir el señuelo según el agua y el clima</a> y rematar con la <a href="/guia/checklist-salida-spinning/" style="color:var(--c-primary)">checklist antes de salir</a>. Es una forma muy limpia de convertir una licencia en una jornada bien planteada.</p>
 """
     }
@@ -1740,7 +1795,7 @@ STATIC_PAGES = [
 <h2>2. Aprende a comprar con criterio</h2>
 <p>Antes de mirar productos concretos, revisa <a href="/guia/como-elegir-carrete-spinning/" style="color:var(--c-primary)">cómo elegir un carrete</a> y <a href="/guia/como-elegir-senuelo-segun-agua-y-clima/" style="color:var(--c-primary)">cómo elegir un señuelo según el agua y el clima</a>. Son dos contenidos clave para no comprar por impulso.</p>
 <h2>3. Escoge especie o escenario</h2>
-<p>Cuando ya tengas la base, entra en contenidos más específicos como <a href="/guia/mejores-senueulos-lucio/" style="color:var(--c-primary)">señuelos para lucio</a>, <a href="/guia/mejores-senueulos-lubina/" style="color:var(--c-primary)">señuelos para lubina</a> o el <a href="/guia/calendario-spinning-espana/" style="color:var(--c-primary)">calendario de spinning en España</a>.</p>
+<p>Cuando ya tengas la base, entra en contenidos más específicos como <a href="/guia/mejores-senuelos-lucio/" style="color:var(--c-primary)">señuelos para lucio</a>, <a href="/guia/mejores-senuelos-lubina/" style="color:var(--c-primary)">señuelos para lubina</a> o el <a href="/guia/calendario-spinning-espana/" style="color:var(--c-primary)">calendario de spinning en España</a>.</p>
 <h2>4. Completa el equipo mínimo</h2>
   <p>Después sí: explora nuestras categorías de <a href="/categoria/canas/" style="color:var(--c-primary)">cañas</a>, <a href="/categoria/carretes/" style="color:var(--c-primary)">carretes</a>, <a href="/categoria/senuelos/" style="color:var(--c-primary)">señuelos</a> y <a href="/categoria/accesorios/" style="color:var(--c-primary)">accesorios</a>. La idea es que cada selección te encuentre ya con una necesidad clara, no con ganas de comprar por comprar.</p>
   <h2>5. Usa la guía interactiva para decidir más rápido</h2>
@@ -1781,9 +1836,9 @@ STATIC_PAGES = [
 <p>Si quieres resolver esto rápido, aquí tienes una ruta directa:</p>
 <ul>
   <li><a href="/guia/como-elegir-senuelo-segun-agua-y-clima/" style="color:var(--c-primary)">Cómo elegir señuelo según agua y clima</a>.</li>
-  <li><a href="/guia/mejores-senueulos-lubina/" style="color:var(--c-primary)">Señuelos para lubina</a>.</li>
+  <li><a href="/guia/mejores-senuelos-lubina/" style="color:var(--c-primary)">Señuelos para lubina</a>.</li>
   <li><a href="/guia/senuelos-para-trucha-spinning/" style="color:var(--c-primary)">Señuelos para trucha en spinning</a>.</li>
-  <li><a href="/guia/mejores-senueulos-lucio/" style="color:var(--c-primary)">Señuelos para lucio</a>.</li>
+  <li><a href="/guia/mejores-senuelos-lucio/" style="color:var(--c-primary)">Señuelos para lucio</a>.</li>
 </ul>
 <h2>Licencia de pesca y normativa: paso obligatorio</h2>
 <p>En España no basta con “tener equipo”. Antes de salir, revisa licencia y normativa del escenario. Según comunidad autónoma y modalidad, cambian permisos, vigencias y requisitos. Para resolverlo sin perder tiempo, tienes la guía de <a href="/guia/licencias-pesca-espana/" style="color:var(--c-primary)">licencia de pesca en España para spinning</a> con enlaces oficiales por territorios.</p>
@@ -2046,7 +2101,7 @@ STATIC_PAGES = [
         "content": """
 <p>En cumplimiento del Reglamento (UE) 2016/679 del Parlamento Europeo y del Consejo (RGPD) y la Ley Orgánica 3/2018, de 5 de diciembre, de Protección de Datos Personales y garantía de los derechos digitales (LOPDGDD), te informamos sobre el tratamiento de tus datos personales.</p>
 <h2>Responsable del tratamiento</h2>
-<p>AJSpinning — ajspinning.com — info@ajspinning.com</p>
+<p>AJSpinning · ajspinning.com · info@ajspinning.com</p>
 <h2>Datos que recopilamos</h2>
 <p>AJSpinning es un sitio web de contenido estático que <strong>no recopila datos personales directamente</strong>. No disponemos de formularios de registro, ni procesamos pagos, ni almacenamos información identificable de los visitantes en nuestros servidores.</p>
 <h2>Cookies y tecnologías de seguimiento</h2>
@@ -2103,7 +2158,7 @@ GUIDE_METADATA = {
             ("¿Qué especie es mejor para un principiante?", "Depende de tu zona, pero perca, trucha y lubina costera en escenarios accesibles suelen ser buenas especies para aprender lectura del agua y control del señuelo."),
         ],
     },
-    "mejores-senueulos-lucio": {
+    "mejores-senuelos-lucio": {
         "cluster": "Especies y escenarios",
         "level": "Intermedio",
         "focus": "Lucio en embalse, río y aguas con estructura",
@@ -2113,7 +2168,7 @@ GUIDE_METADATA = {
             ("¿Hace falta usar acero con lucio?", "Sí, en la mayoría de casos conviene montar un bajo resistente a los dientes del lucio para evitar cortes y pérdidas de señuelos."),
         ],
     },
-    "mejores-senueulos-lubina": {
+    "mejores-senuelos-lubina": {
         "cluster": "Especies y escenarios",
         "level": "Intermedio",
         "focus": "Lubina desde costa, playa y desembocaduras",
@@ -2279,7 +2334,7 @@ GUIDE_CLUSTERS = [
     ("Primeros pasos", ["spinning-para-principiantes", "errores-spinning-principiantes"]),
     ("Equipo y compra", ["como-elegir-carrete-spinning", "cana-de-spinning-como-elegir", "como-elegir-senuelo-segun-agua-y-clima", "nudos-y-bajos-spinning"]),
     ("Atlas de especies", ["especies-spinning-espana", "peces-spinning-agua-dulce-espana", "peces-spinning-mar-espana"]),
-    ("Especies y escenarios", ["mejores-senueulos-lucio", "mejores-senueulos-lubina", "senuelos-para-trucha-spinning", "leer-embalse-lucio-perca", "spinning-costa-espuma-mareas"]),
+    ("Especies y escenarios", ["mejores-senuelos-lucio", "mejores-senuelos-lubina", "senuelos-para-trucha-spinning", "leer-embalse-lucio-perca", "spinning-costa-espuma-mareas"]),
     ("Planificación y progresión", ["calendario-spinning-espana", "tecnicas-spinning-avanzadas", "checklist-salida-spinning", "licencias-pesca-espana"]),
 ]
 
@@ -2288,11 +2343,11 @@ GUIDE_IMAGES = {
         "src": "/assets/img/editorial/spinning-principiantes-muelle.webp",
         "alt": "Pescadores practicando spinning desde un muelle al inicio de la jornada",
     },
-    "mejores-senueulos-lucio": {
+    "mejores-senuelos-lucio": {
         "src": "/assets/img/editorial/senuelos-spinning-seleccion.webp",
         "alt": "Selección de señuelos artificiales para spinning colocados en fila",
     },
-    "mejores-senueulos-lubina": {
+    "mejores-senuelos-lubina": {
         "src": "/assets/img/editorial/lubina-spinning-costa.webp",
         "alt": "Caña de spinning pescando desde costa en mar abierto",
     },
@@ -2364,12 +2419,12 @@ GUIDE_PRODUCT_PLANS = {
         "intro": "Una base sensata para empezar a lanzar sin comprar material al azar: una caña cómoda, un carrete equilibrado, algunos señuelos y una opción sencilla para arrancar rápido.",
         "categories": ["combos", "canas", "carretes", "senueulos"],
     },
-    "mejores-senueulos-lucio": {
+    "mejores-senuelos-lucio": {
         "title": "Material útil para buscar lucio",
         "intro": "Aquí tienes una selección pensada para mover mejor volumen, trabajar profundidades medias y montar terminales más coherentes cuando buscas peces con boca dura y dientes.",
         "categories": ["senueulos", "hilos", "anzuelos"],
     },
-    "mejores-senueulos-lubina": {
+    "mejores-senuelos-lubina": {
         "title": "Señuelos y equipo para lubina desde costa",
         "intro": "Una combinación pensada para playas, espumeros, desembocaduras y puertos: perfiles realistas, líneas finas y cañas que permitan lanzar y leer bien la ola.",
         "categories": ["senueulos", "hilos", "canas"],
@@ -2501,7 +2556,29 @@ def head(
     <meta property="og:image" content="{og_image}">
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:image" content="{og_image}">"""
-    adsense_block = ""
+    if include_adsense:
+        adsense_block = """
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem("ajspinning_cookie_consent_v1");
+        document.documentElement.dataset.cookieConsent = pref || "unset";
+        window.adsbygoogle = window.adsbygoogle || [];
+        if (pref !== "accepted") {
+          window.adsbygoogle.requestNonPersonalizedAds = 1;
+        } else {
+          delete window.adsbygoogle.requestNonPersonalizedAds;
+        }
+      } catch (error) {
+        document.documentElement.dataset.cookieConsent = "unset";
+        window.adsbygoogle = window.adsbygoogle || [];
+        window.adsbygoogle.requestNonPersonalizedAds = 1;
+      }
+    })();
+  </script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-8807692365779886" crossorigin="anonymous"></script>"""
+    else:
+        adsense_block = ""
 
     return f"""<!DOCTYPE html>
 <html lang="es">
@@ -2513,13 +2590,15 @@ def head(
   <meta name="robots" content="{robots}">
   <meta name="author" content="{EDITORIAL_TEAM['name']}">
   <meta name="google-adsense-account" content="{ADSENSE_CLIENT}">
-  <meta name="theme-color" content="#0a1f3d">
+  <meta name="theme-color" content="#07548a">
   <link rel="canonical" href="{canonical}">
   <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
   <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v={CSS_ASSET_VERSION}">
+  <link rel="preload" href="/assets/fonts/manrope-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/saira-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/style.css?v={CSS_ASSET_VERSION}">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Manrope:wght@400;500;600;700;800&family=Saira+Condensed:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/assets/css/editorial.css?v={CSS_ASSET_VERSION}">
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20260626-1">
     <meta property="og:title" content="{title}">
     <meta property="og:description" content="{description}">
     <meta property="og:url" content="{canonical}">
@@ -2532,21 +2611,31 @@ def head(
   </head>"""
 
 
-def nav():
-    return f"""<header class="site-header">
+def nav(active=""):
+    items = [
+        ("inicio", "/", "Inicio"),
+        ("especies", "/especies/", "Especies"),
+        ("material", "/material/", "Material"),
+        ("guias", "/guia/", "Guías"),
+        ("marcas", "/marcas/", "Marcas"),
+        ("biblioteca", "/biblioteca/", "Biblioteca"),
+        ("contacto", "/contacto/", "Contacto"),
+    ]
+    links = "\n        ".join(
+        f'<a href="{href}" class="nav-link"{" aria-current=\"page\"" if key == active else ""}>{label}</a>'
+        for key, href, label in items
+    )
+    return f"""<a href="#main-content" class="skip-link">Saltar al contenido</a>
+<header class="site-header">
   <div class="header-inner">
     <a href="/" class="logo">
       <img src="/assets/img/logo.png" alt="" class="logo-img" width="27" height="36" aria-hidden="true">
       <span class="logo-text">AJ<strong>Spinning</strong></span>
       </a>
       <nav class="main-nav">
-        <a href="/guia/" class="nav-guides">Guías</a>
-        <a href="/pesca-spinning/" class="nav-guide">Pesca spinning</a>
-        <a href="{INTERACTIVE_GUIDE_URL}" class="nav-tool">Guía interactiva</a>
-        <a href="/empieza-aqui/" class="nav-start">Empieza aquí</a>
-        <a href="/tienda-de-pesca/" class="nav-products">Criterio de compra</a>
+        {links}
       </nav>
-      <button class="nav-toggle" aria-label="Menú">&#9776;</button>
+      <button class="nav-toggle" aria-label="Menú">{icon('menu')}</button>
     </div>
   </header>"""
 
@@ -2558,43 +2647,50 @@ def footer():
       <div class="footer-col">
         <div class="footer-logo">
           <img src="/assets/img/logo.png" alt="" class="footer-logo-img" width="29" height="38" aria-hidden="true">
-          <span style="font-family:var(--font-head);font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:-.02em;">AJ<strong style="color:#7ed9f0;">Spinning</strong></span>
+          <span style="font-family:var(--font-head);font-size:1.4rem;font-weight:900;color:#fff;letter-spacing:-.02em;">AJ<strong style="color:var(--c-accent);">Spinning</strong></span>
         </div>
-        <p class="footer-tagline">Tu guía de pesca spinning y casting en España</p>
-        <p class="footer-tagline" style="margin-top:12px;color:rgba(255,255,255,.72);max-width:280px;">Contenido práctico, selección honesta y recursos evergreen para pescar mejor y comprar con más criterio.</p>
+        <p class="footer-tagline">La guía editorial de pesca spinning en España: especies, material y técnica explicados con criterio.</p>
       </div>
       <div class="footer-col">
-        <strong>Rutas editoriales</strong>
-        <nav class="footer-nav-col"><a href="/guia/">Todas las guías</a> <a href="/pesca-spinning/">Pesca spinning en España</a> <a href="/empieza-aqui/">Empieza aquí</a> <a href="{INTERACTIVE_GUIDE_URL}">Guía interactiva</a> <a href="/contacto/">Contacto</a></nav>
-      </div>
-        <div class="footer-col">
-          <strong>Rutas para empezar</strong>
-          <nav class="footer-nav-col">
-            <a href="/empieza-aqui/">Empieza aquí</a>
-            <a href="/guia/spinning-para-principiantes/">Spinning para principiantes</a>
-            <a href="/guia/errores-spinning-principiantes/">Errores comunes</a>
-            <a href="/guia/calendario-spinning-espana/">Calendario de spinning</a>
-            <a href="/guia/licencias-pesca-espana/">Licencias de pesca</a>
-            <a href="{INTERACTIVE_GUIDE_URL}">Guía interactiva</a>
-            <a href="/guia/">Todas las guías</a>
-          </nav>
-        </div>
-      <div class="footer-col">
-        <strong>Confianza y contacto</strong>
+        <strong>Guías</strong>
         <nav class="footer-nav-col">
-          <a href="/equipo-editorial/">Equipo editorial</a>
-          <a href="/compromiso-calidad/">Compromiso de calidad</a>
+          <a href="/guia/">Todas las guías</a>
+          <a href="/especies/">Especies</a>
+          <a href="/biblioteca/">Biblioteca</a>
+          <a href="/guia/spinning-para-principiantes/">Empieza aquí</a>
+          <a href="{INTERACTIVE_GUIDE_URL}">Planificador de jornada</a>
+        </nav>
+      </div>
+      <div class="footer-col">
+        <strong>Material</strong>
+        <nav class="footer-nav-col">
+          <a href="/material/">Guía de material</a>
+          <a href="/marcas/">Marcas</a>
+          <a href="/guia/cana-de-spinning-como-elegir/">Cañas</a>
+          <a href="/guia/como-elegir-carrete-spinning/">Carretes</a>
+          <a href="/guia/como-elegir-senuelo-segun-agua-y-clima/">Señuelos</a>
+        </nav>
+      </div>
+      <div class="footer-col">
+        <strong>Legal</strong>
+        <nav class="footer-nav-col">
           <a href="/sobre-nosotros/">Sobre nosotros</a>
           <a href="/metodologia/">Metodología</a>
-          <a href="/politica-editorial/">Política editorial</a>
-          <a href="/mapa-web/">Mapa web</a>
-          <a href="/contacto/">Contacto</a>
+          <a href="/politica-afiliacion/">Afiliación</a>
           <a href="/aviso-legal/">Aviso legal</a>
           <a href="/condiciones-uso/">Condiciones de uso</a>
           <a href="/politica-privacidad/">Privacidad</a>
-          <a href="/politica-afiliacion/">Afiliación</a>
           <a href="/politica-cookies/">Cookies</a>
         </nav>
+      </div>
+      <div class="footer-col">
+        <strong>Redes</strong>
+        <div class="footer-social">
+          <span class="footer-social-icon" aria-hidden="true">{icon('facebook')}</span>
+          <span class="footer-social-icon" aria-hidden="true">{icon('twitter')}</span>
+          <span class="footer-social-icon" aria-hidden="true">{icon('instagram')}</span>
+        </div>
+        <p class="footer-tagline" style="margin-top:10px;">Próximamente</p>
       </div>
     </div>
     <div class="footer-bottom">
@@ -2820,7 +2916,22 @@ def pick_guide_products(products, categories, limit=4):
 
 
 def guide_related_products_html(g, products):
-    return ""
+    meta = GUIDE_METADATA.get(g["slug"], {})
+    related_category = meta.get("related_category")
+    if not related_category:
+        return ""
+    pool = [p for p in products if p.get("category_slug") == related_category]
+    picks = sorted(pool, key=guide_product_score, reverse=True)[:2]
+    if not picks:
+        return ""
+    items = "\n".join(
+        f'<a href="/producto/{p["slug"]}/"><img src="{p["image"]}" alt="{compact_product_title(p.get("title",""), max_words=8)}" loading="lazy" width="120" height="120"></a>'
+        for p in picks
+    )
+    return f"""<div class="guide-sidebar-card">
+  <h3>Material recomendado</h3>
+  <div class="recommended-material-grid">{items}</div>
+</div>"""
 
 
 def planner_widget_html(context="page"):
@@ -3098,7 +3209,7 @@ def guide_promo_html(slug):
   <h3>Lleva esta guía a la práctica</h3>
   <p>Después de leer esta explicación, explora la categoría de {category.get('name', 'material')} con contexto de compra y enlaces relacionados.</p>
   <div class="article-promo-actions">
-    <a href="/categoria/{related_category}/" class="btn-primary">Ver {category.get('name', 'categoría')} →</a>
+    <a href="/categoria/{category_url_slug(related_category)}/" class="btn-primary">Ver {category.get('name', 'categoría')} →</a>
     <a href="/metodologia/" class="btn-secondary">Ver metodología</a>
   </div>
 </div>"""
@@ -3408,7 +3519,7 @@ def product_context_html(p):
       <p>Si todavía dudas sobre talla, acción, color o escenario, te conviene revisar una guía antes de comprar.</p>
       <div class="stack-actions">
         {guide_cta}
-        <a href="/categoria/{cat_slug}/" class="text-link">Volver a la categoría</a>
+        <a href="/categoria/{category_url_slug(cat_slug)}/" class="text-link">Volver a la categoría</a>
       </div>
     </div>
   </div>
@@ -3420,7 +3531,7 @@ def product_context_html(p):
 def generate_category_page(slug, config, products):
     title       = f"{config['name_plural']} - Pesca Spinning | {SITE_NAME}"
     description = config["desc"][:155]
-    canonical   = f"{BASE_URL}/categoria/{slug}/"
+    canonical   = f"{BASE_URL}/categoria/{category_url_slug(slug)}/"
     count       = len(products)
     cards       = "\n".join(product_card(p) for p in products)
     content_data = CATEGORY_CONTENT.get(slug, {})
@@ -3448,22 +3559,31 @@ def generate_category_page(slug, config, products):
   {{"@type":"ListItem","position":2,"name":"{config['name_plural']}","item":"{canonical}"}}
 ]}}</script>"""
 
+    itemlist_entries = ",\n".join(
+        f'{{"@type":"ListItem","position":{i+1},"url":"{BASE_URL}/producto/{p["slug"]}/"}}'
+        for i, p in enumerate(products[:30])
+    )
+    itemlist_schema = f"""<script type="application/ld+json">
+{{"@context":"https://schema.org","@type":"ItemList","name":"{config['name_plural']}","numberOfItems":{count},"itemListElement":[
+{itemlist_entries}
+]}}</script>""" if products else ""
+
     related_guides = [g for g in GUIDES if GUIDE_METADATA.get(g["slug"], {}).get("related_category") == slug][:3]
     guides_html = ""
     if related_guides:
         cards_html = "\n".join(guide_card_html(g) for g in related_guides)
         guides_html = f'<section class="related-guides container"><h2>Guías relacionadas</h2><div class="guide-grid">{cards_html}</div></section>'
 
-    return f"""{head(title, description, canonical, breadcrumb_schema, robots=CATEGORY_ROBOTS, include_adsense=ADSENSE_ON_CATEGORY_PAGES)}
+    return f"""{head(title, description, canonical, breadcrumb_schema + itemlist_schema, robots=CATEGORY_ROBOTS, include_adsense=ADSENSE_ON_CATEGORY_PAGES)}
 <body>
 {nav()}
-<main class="page-main">
+<main class="page-main" id="main-content">
   <div class="cat-hero">
     <div class="hero-inner">
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/">Inicio</a> › <span>{config['name_plural']}</span>
       </nav>
-      <span class="cat-icon">{config['icon']}</span>
+      <span class="cat-icon">{icon(CATEGORY_ICON_NAME.get(slug, 'toolbox'))}</span>
       <h1>{config['h1']}</h1>
       <p class="cat-desc">{config['desc']}</p>
       <span class="product-count">{count} productos seleccionados</span>
@@ -3537,7 +3657,7 @@ def generate_shop_page(products):
     return f"""{head(f"Tienda de Pesca Spinning Online | {SITE_NAME}", description, canonical, schema, robots=SHOP_ROBOTS, og_image=og_image, include_adsense=ADSENSE_ON_SHOP_PAGE)}
 <body>
 {nav()}
-<main class="page-main">
+<main class="page-main" id="main-content">
   <section class="shop-hero">
     <div class="container shop-hero-layout">
       <div class="shop-hero-copy">
@@ -3720,7 +3840,7 @@ def generate_product_page(p, related):
 <script type="application/ld+json">
 {{"@context":"https://schema.org","@type":"BreadcrumbList","itemListElement":[
 {{"@type":"ListItem","position":1,"name":"Inicio","item":"{BASE_URL}/"}},
-  {{"@type":"ListItem","position":2,"name":"{cat_name}","item":"{BASE_URL}/categoria/{cat_slug}/"}},
+  {{"@type":"ListItem","position":2,"name":"{cat_name}","item":"{BASE_URL}/categoria/{category_url_slug(cat_slug)}/"}},
   {{"@type":"ListItem","position":3,"name":"{display_title[:40]}","item":"{canonical}"}}
 ]}}</script>"""
 
@@ -3772,14 +3892,27 @@ def generate_product_page(p, related):
 </section>""" if related_cards else ""
     context_html = product_context_html(p)
 
+    spec_rows = [("Categoría", cat_name), ("Precio orientativo", f"{p['price']:.2f} €")]
+    if p.get("rating"):
+        spec_rows.append(("Valoración del vendedor", str(p["rating"])))
+    if p.get("sales"):
+        spec_rows.append(("Unidades vendidas", str(p["sales"])))
+    if p.get("discount", 0) >= 5:
+        spec_rows.append(("Descuento aplicado", f"-{p['discount']}%"))
+    spec_rows_html = "\n".join(f"<tr><th>{label}</th><td>{value}</td></tr>" for label, value in spec_rows)
+    spec_table_html = f"""<table class="spec-table">
+  <caption>Ficha rápida</caption>
+  {spec_rows_html}
+</table>"""
+
     return f"""{head(title, description, canonical, schema, og_type="product", robots=PRODUCT_ROBOTS, include_adsense=False)}
 <body>
 {nav()}
-<main class="page-main">
+<main class="page-main" id="main-content">
   <div class="container">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Inicio</a> ›
-      <a href="/categoria/{cat_slug}/">{cat_name}</a> ›
+      <a href="/categoria/{category_url_slug(cat_slug)}/">{cat_name}</a> ›
       <span>{display_title[:45]}...</span>
     </nav>
     <article class="product-detail">
@@ -3788,23 +3921,25 @@ def generate_product_page(p, related):
         {'<div class="badge-big">-' + str(p["discount"]) + '% descuento</div>' if p.get("discount",0) >= 5 else ""}
       </div>
       <div class="product-info">
-        <p class="product-cat-tag"><a href="/categoria/{cat_slug}/">{cat_name}</a></p>
+        <p class="product-cat-tag"><a href="/categoria/{category_url_slug(cat_slug)}/">{cat_name}</a></p>
         <h1 class="product-title">{display_title}</h1>
         <div class="product-pricing">
           <span class="price-big">{p['price']:.2f} €</span>
           {original_html}
         </div>
+        <p class="price-disclaimer">{icon('info')} Precio orientativo: puede variar en AliExpress según stock, variante y promociones activas.</p>
         <div class="product-meta">
-          {'<span class="meta-sales">🛒 ' + str(p.get("sales", 0)) + ' comprados</span>' if p.get("sales") else ""}
-          {'<span class="meta-rating">⭐ ' + str(p.get("rating", "")) + '</span>' if p.get("rating") else ""}
-          <span class="meta-ship">🚚 Envío gratis a España</span>
+          {'<span class="meta-sales">' + icon('cart') + ' ' + str(p.get("sales", 0)) + ' comprados</span>' if p.get("sales") else ""}
+          {'<span class="meta-rating">' + icon('star') + ' ' + str(p.get("rating", "")) + '</span>' if p.get("rating") else ""}
+          <span class="meta-ship">{icon('truck')} Envío gratis a España</span>
         </div>
         <a href="{outbound_path(p['slug'])}" class="btn-buy-big" target="_blank" rel="nofollow noopener sponsored">
-          🛒 Comprar en AliExpress
+          {icon('cart')} Ver en AliExpress
         </a>
         <p class="affiliate-notice">
           Al hacer clic serás redirigido a AliExpress. AJSpinning recibe una comisión sin coste adicional para ti.
         </p>
+        {spec_table_html}
         <div class="product-analysis">
           <h3>Análisis editorial AJSpinning</h3>
           <p>{editorial['summary']}</p>
@@ -3851,7 +3986,11 @@ def generate_guide_page(g, products):
     meta = GUIDE_METADATA.get(g["slug"], {})
     image = GUIDE_IMAGES.get(g["slug"])
     og_image = f"{BASE_URL}{image['src']}" if image else ""
-    cover_html = guide_image_html(g["slug"], class_name="article-cover", loading="eager", tag="figure")
+    hero_photo_html = ""
+    if image:
+        hero_photo_html = f"""<figure class="article-hero-photo">
+  <img src="{image['src']}" alt="{image['alt']}" loading="eager" width="1600" height="900">
+</figure>"""
     guide_content, headings = inject_heading_ids(g["content"])
     faq_items = meta.get("faq", [])
     faq_block = ""
@@ -3892,41 +4031,44 @@ def generate_guide_page(g, products):
     level = meta.get("level", "Guía")
     focus = meta.get("focus", "Spinning en España")
 
+    toc_sidebar = f'<div class="guide-sidebar-card"><h3>Contenido</h3><nav class="toc-links">{"".join(f"<a href=\"#{hid}\">{label}</a>" for hid, label in headings)}</nav></div>' if headings else ""
+
     return f"""{head(g['title'], g['description'], canonical, schema, og_type="article", og_image=og_image)}
 <body>
-{nav()}
-<main class="page-main">
+{nav('guias')}
+<main class="page-main" id="main-content">
+  {hero_photo_html}
   <div class="container">
-    <nav class="breadcrumb" aria-label="Breadcrumb">
-      <a href="/">Inicio</a> › <a href="/guia/">Guías</a> › <span>{g['title'][:40]}...</span>
-    </nav>
+    <div class="article-hero-card">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Inicio</a> › <a href="/guia/">Guías</a> › <span>{g['title'][:40]}...</span>
+      </nav>
+      <span class="guide-badge">{level} · Guía de pesca</span>
+      <h1>{g['title']}</h1>
+      <div class="article-meta">
+        <span>{icon('calendar')} {g['date']}</span>
+        <span>{icon('refresh')} Actualizado: {TODAY}</span>
+        <span>{icon('clock')} {g['reading_time']} min de lectura</span>
+      </div>
+      <div class="article-tags">
+        <span class="article-tag">{meta.get('cluster', 'Guía')}</span>
+        <span class="article-tag">{focus}</span>
+      </div>
+      <p class="article-intro">{g['description']}</p>
+    </div>
     <article class="article-page">
-      <header class="article-header">
-        <span class="guide-badge">{level} · Guía de pesca</span>
-        <h1>{g['title']}</h1>
-        <div class="article-meta">
-          <span>📅 {g['date']}</span>
-          <span>🔄 Actualizado: {TODAY}</span>
-          <span>🕐 {g['reading_time']} min de lectura</span>
-        </div>
-        <div class="article-tags">
-          <span class="article-tag">{meta.get('cluster', 'Guía')}</span>
-          <span class="article-tag">{focus}</span>
-        </div>
-        <p class="article-intro">{g['description']}</p>
-        {cover_html}
-      </header>
       <div class="article-layout">
         <div class="article-main">
           <div class="article-body">
             {guide_content}
           </div>
-          {related_products}
           {promo}
           {faq_block}
         </div>
         <div class="article-side">
-          {toc}
+          {toc_sidebar}
+          <div class="ad-slot ad-slot-tall">Espacio publicitario</div>
+          {related_products}
           {author_card_html()}
         </div>
       </div>
@@ -3970,13 +4112,13 @@ def generate_guides_index():
     return f"""{head(f"Guías de Pesca Spinning | {SITE_NAME}", description, canonical, schema)}
 <body>
 {nav()}
-<main class="page-main">
+<main class="page-main" id="main-content">
   <div class="cat-hero">
     <div class="hero-inner">
       <nav class="breadcrumb" aria-label="Breadcrumb">
         <a href="/">Inicio</a> › <span>Guías</span>
       </nav>
-      <span class="cat-icon">📖</span>
+      <span class="cat-icon">{icon('book')}</span>
       <h1>Guías de Pesca Spinning</h1>
       <p class="cat-desc">Técnica, material y escenarios para pescar mejor en España, sin rodeos y con enfoque práctico.</p>
     </div>
@@ -4084,7 +4226,7 @@ def generate_static_page(page):
     return f"""{head(page['title'], page['description'], canonical, schema, robots=page.get('robots', DEFAULT_ROBOTS), extra_head=page.get('extra_head', ''), include_adsense=include_adsense)}
 <body>
 {nav()}
-<main class="page-main">
+<main class="page-main" id="main-content">
   <div class="{' '.join(page_classes)}">
     <nav class="breadcrumb" aria-label="Breadcrumb">
       <a href="/">Inicio</a> › <span>{page['h1']}</span>
@@ -4093,7 +4235,7 @@ def generate_static_page(page):
       <p class="section-kicker">AJSpinning</p>
       <h1>{page['h1']}</h1>
       <p class="static-intro">{page['description']}</p>
-      <p class="article-meta"><span>🔄 Actualizado: {TODAY}</span></p>
+      <p class="article-meta"><span>{icon('refresh')} Actualizado: {TODAY}</span></p>
       </header>
       <div class="{' '.join(layout_classes)}">
         <div class="static-content">
@@ -4139,9 +4281,9 @@ def generate_outbound_page(product):
   <style>
     body {{
       margin: 0;
-      font-family: 'Manrope', sans-serif;
-      background: #f5f8fc;
-      color: #0b1f3a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+      background: #fafaf9;
+      color: #14151a;
       display: grid;
       place-items: center;
       min-height: 100vh;
@@ -4151,10 +4293,10 @@ def generate_outbound_page(product):
       max-width: 620px;
       width: 100%;
       background: #fff;
-      border: 1px solid #d7e2ef;
+      border: 1px solid #e4e4e1;
       border-radius: 16px;
       padding: 22px;
-      box-shadow: 0 10px 24px rgba(5, 26, 53, 0.08);
+      box-shadow: 0 10px 24px rgba(20, 21, 26, 0.06);
     }}
     h1 {{
       margin: 0 0 10px;
@@ -4164,11 +4306,14 @@ def generate_outbound_page(product):
     p {{
       margin: 0 0 12px;
       line-height: 1.65;
-      color: #29405e;
+      color: #45474d;
     }}
     a {{
-      color: #0f6ea7;
+      color: #14151a;
       font-weight: 700;
+      text-decoration: underline;
+      text-decoration-color: #aee62b;
+      text-decoration-thickness: 2px;
     }}
   </style>
 </head>
@@ -4213,12 +4358,12 @@ def main():
     for slug, config in CATEGORIES.items():
         cat_products = by_cat.get(slug, [])
         html = generate_category_page(slug, config, cat_products)
-        out = CAT_DIR / slug
+        out = CAT_DIR / category_url_slug(slug)
         out.mkdir(parents=True, exist_ok=True)
         (out / "index.html").write_text(html, encoding="utf-8")
-        print(f"  OK /categoria/{slug}/ ({len(cat_products)} productos)")
+        print(f"  OK /categoria/{category_url_slug(slug)}/ ({len(cat_products)} productos)")
         if not CATEGORY_ROBOTS.lower().startswith("noindex"):
-            all_urls.append(f"{BASE_URL}/categoria/{slug}/")
+            all_urls.append(f"{BASE_URL}/categoria/{category_url_slug(slug)}/")
         pages += 1
 
     # Página tipo tienda / catálogo
