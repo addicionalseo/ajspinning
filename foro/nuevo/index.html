@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Nuevo post · Foro AJSpinning</title>
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#07548a">
+  <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+  <link rel="apple-touch-icon" href="/assets/img/apple-touch-icon.png?v=20260618-1">
+  <link rel="preload" href="/assets/fonts/manrope-variable.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/assets/fonts/saira-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="/assets/css/style.css?v=20260618-1">
+  <link rel="stylesheet" href="/assets/css/premium.css?v=20260626-1">
+  <link rel="stylesheet" href="/assets/css/foro.css?v=20260628-1">
+</head>
+<body data-foro-page="nuevo">
+<a href="#main-content" class="skip-link">Saltar al contenido</a>
+<header class="site-header">
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <img src="/assets/img/logo.png" alt="" class="logo-img" width="27" height="36" aria-hidden="true">
+      <span class="logo-text">AJ<strong>Spinning</strong></span>
+    </a>
+    <nav class="main-nav">
+      <a href="/" class="nav-link">Inicio</a>
+      <a href="/especies/" class="nav-link">Especies</a>
+      <a href="/material/" class="nav-link">Material</a>
+      <a href="/guia/" class="nav-link">Guías</a>
+      <a href="/recetas/" class="nav-link">Recetas</a>
+      <a href="/marcas/" class="nav-link">Marcas</a>
+      <a href="/biblioteca/" class="nav-link">Biblioteca</a>
+      <a href="/juegos/" class="nav-link">Juegos</a>
+      <a href="/foro/" class="nav-link" aria-current="page">Foro</a>
+      <a href="/contacto/" class="nav-link">Contacto</a>
+    </nav>
+    <button class="nav-toggle" aria-label="Menú"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+  </div>
+</header>
+
+<main class="page-main" id="main-content">
+  <div class="foro-wrap" style="max-width:820px">
+
+    <div class="foro-topbar" style="margin-bottom:16px">
+      <div>
+        <h1 class="foro-topbar-title">Nuevo <span>post</span></h1>
+        <p class="foro-topbar-sub">Comparte con la comunidad</p>
+      </div>
+      <div class="foro-topbar-right">
+        <div id="foro-auth-bar"></div>
+        <a href="/foro/" class="foro-back-link" style="margin:0">← Al foro</a>
+      </div>
+    </div>
+
+    <div id="nuevo-form-wrap" class="foro-form-card">
+      <form onsubmit="handleNewPost(event)">
+
+        <div class="foro-field">
+          <label>Categoría</label>
+          <select id="post-category" class="foro-select" required>
+            <option value="">— Selecciona categoría —</option>
+          </select>
+        </div>
+
+        <div class="foro-field">
+          <label>Título</label>
+          <input id="post-title" type="text" required minlength="5" maxlength="200"
+            placeholder="Describe brevemente de qué trata tu post…">
+          <p class="foro-char-count"><span id="title-chars">0</span>/200</p>
+        </div>
+
+        <div class="foro-field">
+          <label>Texto</label>
+          <textarea id="post-body" class="foro-textarea" required minlength="10" rows="10"
+            placeholder="Cuéntanos todo lo que quieras: zona de pesca, técnica usada, preguntas, dudas… cuanto más detalle, más útil será para la comunidad."></textarea>
+        </div>
+
+        <p id="post-error" class="foro-error" style="min-height:18px"></p>
+
+        <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+          <button id="foro-submit-btn" class="foro-btn" type="submit">Publicar post</button>
+          <a href="/foro/" class="foro-btn-ghost">Cancelar</a>
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div class="footer-cols">
+      <div class="footer-col">
+        <div class="footer-brand">
+          <span class="logo-text footer-logo-text">AJ<strong>Spinning</strong></span>
+          <p class="footer-tagline">La guía editorial de pesca spinning en España.</p>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h3 class="footer-heading">Foro</h3>
+        <ul class="footer-links">
+          <li><a href="/foro/">Ver todos los posts</a></li>
+          <li><a href="/guia/">Explorar guías</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h3 class="footer-heading">Legal</h3>
+        <ul class="footer-links">
+          <li><a href="/politica-privacidad/">Privacidad</a></li>
+          <li><a href="/aviso-legal/">Aviso legal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-legal">AJSpinning © 2026 · <a href="/politica-privacidad/">Privacidad</a> · <a href="/aviso-legal/">Aviso legal</a></p>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="/assets/js/app.js?v=20260618-1"></script>
+<script src="/assets/js/foro.js?v=20260628-1"></script>
+</body>
+</html>
