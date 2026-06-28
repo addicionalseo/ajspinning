@@ -82,6 +82,7 @@
       <a href="/recetas/" class="nav-link">Recetas</a>
       <a href="/marcas/" class="nav-link">Marcas</a>
       <a href="/biblioteca/" class="nav-link">Biblioteca</a>
+      <a href="/juegos/" class="nav-link">Juegos</a>
       <a href="/contacto/" class="nav-link">Contacto</a>
     </nav>
     <button class="nav-toggle" aria-label="Menú"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
@@ -475,7 +476,7 @@
       <div class="editorial-section-head is-centered" data-reveal>
         <p class="section-kicker">Interactivo</p>
         <h2>Juega y practica</h2>
-        <p>Tres juegos de pesca: domina el timing de captura, entrena reflejos e identifica especies.</p>
+        <p>Cuatro juegos de pesca: timing de captura, reflejos, quiz de especies y precisión de lanzamiento.</p>
       </div>
       <div class="games-grid-home">
 
@@ -536,6 +537,24 @@
             <div class="ghc-stats">
               <span>Aciertos: <strong data-qz-score>0</strong>/6</span>
               <span>Récord: <strong data-qz-best>0</strong></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- JUEGO 4: LANCE PERFECTO (precisión de lanzamiento) -->
+        <div class="game-home-card" data-game-cast>
+          <div class="ghc-head">
+            <span class="ghc-num">04 · Precisión</span>
+            <h3 class="ghc-title">Lance perfecto</h3>
+            <p class="ghc-desc">Ajusta la potencia del lanzamiento y suelta en el momento ideal para que el señuelo caiga exacto en la zona de pesca.</p>
+          </div>
+          <canvas class="ghc-canvas" data-ct-canvas width="300" height="200"></canvas>
+          <div class="ghc-foot">
+            <button class="ghc-action" data-ct-btn>Lanzar</button>
+            <p class="ghc-msg" data-ct-msg>Mantén pulsado para cargar potencia, suelta en el ángulo ideal.</p>
+            <div class="ghc-stats">
+              <span>Aciertos: <strong data-ct-score>0</strong>/5</span>
+              <span>Récord: <strong data-ct-best>0</strong></span>
             </div>
           </div>
         </div>
@@ -613,6 +632,6 @@
 </button>
 
 <script src="/assets/js/app.js?v=20260618-1"></script>
-<script src="/assets/js/games-home.js?v=20260626-1"></script>
+<script src="/assets/js/games-home.js?v=20260628-3"></script>
 </body>
 </html>
