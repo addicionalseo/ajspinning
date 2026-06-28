@@ -290,8 +290,16 @@
     cvs.addEventListener('touchcancel', onTEnd,   { passive: false });
 
     var KB1 = { ArrowUp:'up', ArrowDown:'dn', ArrowLeft:'lt', ArrowRight:'rt', KeyW:'up', KeyS:'dn', KeyA:'lt', KeyD:'rt' };
+    var cvs1Hovered = false;
+    cvs.addEventListener('mouseenter', function () { cvs1Hovered = true; });
+    cvs.addEventListener('mouseleave', function () { cvs1Hovered = false; });
     WIN.addEventListener('keydown', function (e) {
-      var k = KB1[e.code]; if (k) { keys[k] = true; return; }
+      var k = KB1[e.code];
+      if (k) {
+        keys[k] = true;
+        if (cvs1Hovered || S === 'play') e.preventDefault(); // prevent page scroll with arrows
+        return;
+      }
       if (e.code === 'Space' || e.code === 'KeyE' || e.code === 'Enter') {
         e.preventDefault();
         if (!actDown) { actDown = true; actConsumed = false; }
@@ -937,13 +945,13 @@
       if (qIdx >= questions3.length) { endQuiz3(); return; }
       var q = questions3[qIdx];
 
-      // Image — starts as pure silhouette
+      // Image — visible desde el inicio
       if (imgEl) {
         imgEl.src = '/assets/img/species/' + q.file + '.webp';
         imgEl.alt = 'Identifica esta especie';
         imgEl.style.display = '';
         imgEl.style.transition = 'none';
-        imgEl.style.filter = 'brightness(0%) contrast(120%)';
+        imgEl.style.filter = 'none';
       }
 
       // Build choices: 1 correct + 3 wrong
@@ -975,13 +983,6 @@
           timerFill.style.width = (pct * 100) + '%';
           timerFill.style.backgroundColor = pct > 0.5 ? C.blue : pct > 0.25 ? C.orange : C.red;
         }
-        // Gradual reveal: starts at 55% timer, fully revealed at 10%
-        if (imgEl && pct < 0.55) {
-          var revPct = 1 - pct / 0.55; // 0→1
-          var brightness = Math.round(revPct * 100);
-          var blur = (1 - revPct) * 5;
-          imgEl.style.filter = 'brightness(' + brightness + '%) blur(' + blur + 'px)';
-        }
         if (timerLeft3 <= 0) { clearInterval(timerIv); if (S3 === 'playing') timeOut3(q); }
       }, 100);
 
@@ -1000,7 +1001,7 @@
       });
       if (correct) { score3++; SFX.correct(); msg3('¡Correcto! ' + q.fact, true); if (scoE3) scoE3.textContent = score3 + '/' + (qIdx + 1); }
       else { SFX.wrong(); msg3('Era ' + q.name + '. ' + q.fact, false); }
-      setTimeout(function () { S3 = 'playing'; qIdx++; showQ3(); }, 2100);
+      setTimeout(function () { S3 = 'playing'; qIdx++; showQ3(); }, 3800);
     }
 
     function timeOut3(q) {
@@ -1009,7 +1010,7 @@
       if (timerFill) timerFill.style.backgroundColor = C.red;
       choicesEl.querySelectorAll('.qz-choice').forEach(function (b) { b.disabled = true; if (b.textContent === q.name) b.classList.add('qz-correct'); });
       SFX.wrong(); msg3('¡Tiempo! Era ' + q.name + '. ' + q.fact, false);
-      setTimeout(function () { S3 = 'playing'; qIdx++; showQ3(); }, 2200);
+      setTimeout(function () { S3 = 'playing'; qIdx++; showQ3(); }, 4200);
     }
 
     function endQuiz3() {
@@ -1067,7 +1068,7 @@
 
     var ANGLER_X = 38, ANGLER_Y = 108;
     var WATER_Y4 = Math.floor(CH * 0.52);
-    var ANGLE_MIN = 12, ANGLE_MAX = 68; // degrees
+    var ANGLE_MIN = 18, ANGLE_MAX = 62; // degrees — narrower range, more forgiving
     var angleOsc = { v: ANGLE_MIN, dir: 1 }; // degrees per second * oscillation
     var powerOsc = { v: 0, dir: 1 };
     var lockedAngle = 0, lockedPower = 0;
@@ -1081,9 +1082,9 @@
 
     var TX = CW * 0.68, TY = CH * 0.72;
     var RINGS4 = [
-      { r: 12, pts: 3, col: '#f87171' },
-      { r: 24, pts: 2, col: '#f97316' },
-      { r: 38, pts: 1, col: '#fbbf24' }
+      { r: 17, pts: 3, col: '#f87171' },
+      { r: 36, pts: 2, col: '#f97316' },
+      { r: 58, pts: 1, col: '#fbbf24' }
     ];
 
     function msg4(t, ok) {
@@ -1092,7 +1093,7 @@
     }
 
     function startCastGame() {
-      castsLeft = 5; score4 = 0; wind4 = rand(-0.45, 0.45);
+      castsLeft = 6; score4 = 0; wind4 = rand(-0.22, 0.22);
       lure4 = null; ptcls4 = []; floats4 = []; resultMsg4 = null; landingMarks = [];
       if (scoE) scoE.textContent = '0/5';
       beginAngle();
@@ -1214,13 +1215,13 @@
       if (resultMsg4) resultMsg4.timer -= dt;
 
       if (S4 === 'angle') {
-        var oscSpd = (ANGLE_MAX - ANGLE_MIN) * 0.9 * dt;
+        var oscSpd = (ANGLE_MAX - ANGLE_MIN) * 0.5 * dt;
         angleOsc.v += angleOsc.dir * oscSpd;
         if (angleOsc.v >= ANGLE_MAX) { angleOsc.v = ANGLE_MAX; angleOsc.dir = -1; }
         if (angleOsc.v <= ANGLE_MIN) { angleOsc.v = ANGLE_MIN; angleOsc.dir =  1; }
       }
       if (S4 === 'power') {
-        powerOsc.v += powerOsc.dir * 1.15 * dt;
+        powerOsc.v += powerOsc.dir * 0.62 * dt;
         if (powerOsc.v >= 1) { powerOsc.v = 1; powerOsc.dir = -1; }
         if (powerOsc.v <= 0) { powerOsc.v = 0; powerOsc.dir =  1; }
       }
@@ -1379,15 +1380,22 @@
       if (S4 === 'power') {
         var bx4 = 8, by4 = CH - 30, bw4 = 78, bh4 = 10;
         ctx.fillStyle = 'rgba(0,0,0,.55)'; ctx.fillRect(bx4, by4, bw4, bh4);
-        var barCol4 = powerOsc.v < 0.4 ? C.blue : powerOsc.v < 0.75 ? C.orange : C.red;
+        // Background bar
+        ctx.fillStyle = '#050f1c'; ctx.fillRect(bx4, by4, bw4, bh4);
+        // Ideal zone highlight (45% - 80%)
+        ctx.fillStyle = 'rgba(34,197,94,0.18)'; ctx.fillRect(bx4 + bw4 * 0.45, by4, bw4 * 0.35, bh4);
+        // Fill
+        var barCol4 = powerOsc.v < 0.4 ? C.blue : powerOsc.v < 0.78 ? C.green : C.red;
         ctx.fillStyle = barCol4; ctx.fillRect(bx4, by4, bw4 * powerOsc.v, bh4);
+        // Ideal zone border
+        ctx.strokeStyle = 'rgba(34,197,94,0.5)'; ctx.lineWidth = 1;
+        ctx.strokeRect(bx4 + bw4 * 0.45, by4, bw4 * 0.35, bh4);
+        // Bar border
         ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1; ctx.strokeRect(bx4, by4, bw4, bh4);
         ctx.fillStyle = C.text2; ctx.font = '8px monospace'; ctx.textAlign = 'left';
         ctx.fillText('POTENCIA', bx4, by4 - 3);
-        // Ideal zone marker (sweet spot center)
-        var idealX = bx4 + bw4 * 0.7;
-        ctx.strokeStyle = 'rgba(255,255,255,0.4)'; ctx.lineWidth = 1;
-        ctx.beginPath(); ctx.moveTo(idealX, by4 - 2); ctx.lineTo(idealX, by4 + bh4 + 2); ctx.stroke();
+        ctx.fillStyle = 'rgba(34,197,94,0.7)'; ctx.font = '7px monospace';
+        ctx.fillText('↑ zona ideal', bx4 + bw4 * 0.45, by4 + bh4 + 8);
       }
 
       // Wind indicator
