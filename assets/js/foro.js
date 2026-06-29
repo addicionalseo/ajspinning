@@ -3,9 +3,8 @@
    Supabase v2 + Vanilla JS puro
    ════════════════════════════════════════════════════════════════
 
-   CONFIGURACIÓN — reemplaza estos valores con los de tu proyecto:
-   1. Ve a https://supabase.com → tu proyecto → Settings → API
-   2. Copia "Project URL" y "anon/public key"
+   Credenciales públicas del proyecto Supabase (anon key):
+   Settings → API → Project URL / anon public
    ════════════════════════════════════════════════════════════════ */
 
 var FORO_URL = 'https://ssmcqqtnbuyuxqsyozdn.supabase.co';
@@ -17,7 +16,7 @@ var F = {
   user: null,
   profile: null,
   categories: [],
-  votes: new Set(),   // IDs de targets que el usuario ya ha votado
+  votes: new Set(),
   catFilter: null,
   sort: 'new'
 };
@@ -39,13 +38,26 @@ function timeAgo(iso) {
 }
 function avatarChar(name) { return (name || '?')[0].toUpperCase(); }
 function avatarColor(name) {
-  var cols = ['#4ab8f7', '#22c55e', '#f97316', '#fbbf24', '#a78bfa', '#f87171', '#38bdf8', '#4ade80'];
+  var cols = ['#4ab8f7','#22c55e','#f97316','#fbbf24','#a78bfa','#f87171','#38bdf8','#4ade80'];
   return cols[(name || '?').charCodeAt(0) % cols.length];
 }
 function userName(profile) {
   if (profile && profile.username) return profile.username;
   if (F.user) return F.user.email.split('@')[0];
   return 'anónimo';
+}
+
+/* Genera HTML de avatar: imagen real si hay avatar_url, sino inicial de color */
+function avatarHtml(prf, cls) {
+  var name = (prf && prf.username) || '?';
+  var col = avatarColor(name);
+  var clsStr = cls ? ' ' + cls : '';
+  if (prf && prf.avatar_url) {
+    return '<span class="foro-avatar' + clsStr + '" style="background:' + col + ';padding:0;overflow:hidden">' +
+      '<img src="' + esc(prf.avatar_url) + '" alt="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display=\'none\'">' +
+      '</span>';
+  }
+  return '<span class="foro-avatar' + clsStr + '" style="background:' + col + '">' + esc(avatarChar(name)) + '</span>';
 }
 
 /* ── Verificar config ────────────────────────────────────────── */
@@ -90,6 +102,27 @@ function injectModals() {
 
 /* ── Auth ────────────────────────────────────────────────────── */
 async function initAuth() {
+  /* Gestión del redirect tras confirmación de email.
+     Supabase v2 implict flow devuelve tokens en el hash (#access_token=...).
+     El cliente los procesa automáticamente en getSession(), pero limpiamos
+     el hash para que no quede en el historial ni se comparta. */
+  var hash = window.location.hash;
+  if (hash && hash.includes('access_token')) {
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+  }
+  if (hash && hash.includes('error_description')) {
+    var params = new URLSearchParams(hash.replace(/^#/, ''));
+    var errDesc = decodeURIComponent((params.get('error_description') || 'Error de verificación').replace(/\+/g, ' '));
+    history.replaceState(null, '', window.location.pathname + window.location.search);
+    setTimeout(function() {
+      var msg = document.createElement('div');
+      msg.className = 'foro-setup-banner';
+      msg.textContent = '⚠️ ' + errDesc;
+      var wrap = document.querySelector('.foro-wrap');
+      if (wrap) wrap.insertAdjacentElement('afterbegin', msg);
+    }, 100);
+  }
+
   var res = await sb.auth.getSession();
   if (res.data && res.data.session) {
     F.user = res.data.session.user;
@@ -118,6 +151,10 @@ async function initAuth() {
 async function loadProfile() {
   if (!F.user) return;
   var res = await sb.from('profiles').select('*').eq('id', F.user.id).single();
+  /* PGRST116 = ninguna fila encontrada — es normal si el trigger no creó el perfil */
+  if (res.error && res.error.code !== 'PGRST116') {
+    console.warn('[foro] loadProfile:', res.error.message);
+  }
   F.profile = res.data || null;
 }
 
@@ -133,11 +170,10 @@ function renderAuthBar() {
   if (!el) return;
   if (F.user) {
     var name = userName(F.profile);
-    var col = avatarColor(name);
     el.innerHTML =
       '<div class="foro-user-pill">' +
-      '<span class="foro-avatar" style="background:' + col + '" title="' + esc(name) + '">' + esc(avatarChar(name)) + '</span>' +
-      '<span class="foro-uname">@' + esc(name) + '</span>' +
+      avatarHtml(F.profile, '') +
+      '<a class="foro-uname" href="/foro/perfil/" title="Mi perfil">@' + esc(name) + '</a>' +
       '<button class="foro-btn-ghost" onclick="doLogout()">Salir</button>' +
       '</div>';
   } else {
@@ -151,19 +187,29 @@ async function doLogin(email, pw) {
   var res = await sb.auth.signInWithPassword({ email: email, password: pw });
   return res.error ? res.error.message : null;
 }
+
+/* FIX: emailRedirectTo para que el link de confirmación redirija a /foro/ */
 async function doRegister(email, pw) {
-  var res = await sb.auth.signUp({ email: email, password: pw });
+  var redirectTo = window.location.origin + '/foro/';
+  var res = await sb.auth.signUp({
+    email: email,
+    password: pw,
+    options: { emailRedirectTo: redirectTo }
+  });
   return res.error ? res.error.message : null;
 }
+
 async function doLogout() {
   await sb.auth.signOut();
   window.location.reload();
 }
+
+/* FIX: upsert en lugar de update para garantizar creación si el trigger falló */
 async function saveUsername(u) {
   u = u.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
   if (u.length < 3) return 'Mínimo 3 caracteres (letras, números, _)';
   if (u.length > 20) return 'Máximo 20 caracteres';
-  var res = await sb.from('profiles').update({ username: u }).eq('id', F.user.id);
+  var res = await sb.from('profiles').upsert({ id: F.user.id, username: u }, { onConflict: 'id' });
   if (res.error) return res.error.code === '23505' ? 'Ese nombre ya está en uso, prueba otro' : res.error.message;
   F.profile = Object.assign({}, F.profile || {}, { id: F.user.id, username: u });
   return null;
@@ -197,7 +243,6 @@ function hideUsernameModal() {
   var m = document.getElementById('foro-username-modal');
   if (m) m.style.display = 'none';
 }
-
 async function handleLogin(e) {
   e.preventDefault();
   var msg = document.getElementById('modal-msg');
@@ -240,7 +285,8 @@ async function loadCategories() {
 async function loadPosts(opts) {
   opts = opts || {};
   var q = sb.from('posts').select(
-    'id,created_at,title,body,upvotes,comment_count,user_id,category_id,profiles(username),categories(slug,name,icon)'
+    'id,created_at,title,body,upvotes,comment_count,user_id,category_id,' +
+    'profiles(username,avatar_url),categories(slug,name,icon)'
   );
   if (opts.category) q = q.eq('category_id', opts.category);
   if (opts.sort === 'top') q = q.order('upvotes', { ascending: false });
@@ -251,7 +297,7 @@ async function loadPosts(opts) {
 
 async function loadPost(id) {
   var res = await sb.from('posts')
-    .select('*,profiles(username),categories(slug,name,icon)')
+    .select('*,profiles(username,avatar_url),categories(slug,name,icon)')
     .eq('id', id).single();
   return res.data || null;
 }
@@ -274,7 +320,7 @@ async function createPost(catId, title, body) {
 /* ── API: Comentarios ────────────────────────────────────────── */
 async function loadComments(postId) {
   var res = await sb.from('comments')
-    .select('*,profiles(username)')
+    .select('*,profiles(username,avatar_url)')
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
   return res.data || [];
@@ -284,28 +330,25 @@ async function createComment(postId, body, parentId) {
   if (!F.user) { showAuthModal('login'); return { error: 'login' }; }
   var obj = { user_id: F.user.id, post_id: postId, body: body.trim() };
   if (parentId) obj.parent_id = parentId;
-  var res = await sb.from('comments').insert(obj).select('*,profiles(username)').single();
-  // comment_count s'actualitza via trigger trg_comment_count (no cal RPC)
+  var res = await sb.from('comments').insert(obj).select('*,profiles(username,avatar_url)').single();
   return { data: res.data, error: res.error ? res.error.message : null };
 }
 
-/* ── Votos (via toggle_vote RPC atòmic) ─────────────────────── */
+/* ── Votos (via toggle_vote RPC atómico) ────────────────────── */
 async function toggleVote(targetId, targetType, countEl, btnEl) {
   if (!F.user) { showAuthModal('login'); return; }
   var had = F.votes.has(targetId);
-  // Optimistic UI
   countEl.textContent = Math.max(0, (parseInt(countEl.textContent) || 0) + (had ? -1 : 1));
   btnEl.classList.toggle('voted', !had);
 
   var res = await sb.rpc('toggle_vote', { p_target_id: targetId, p_target_type: targetType });
 
   if (res.error) {
-    // Revertir si falla (xarxa, sessió expirada…)
     countEl.textContent = Math.max(0, (parseInt(countEl.textContent) || 0) + (had ? 1 : -1));
     btnEl.classList.toggle('voted', had);
+    console.warn('[foro] toggleVote:', res.error.message);
     return;
   }
-  // Sincronitza amb l'estat real retornat pel servidor
   if (res.data) {
     countEl.textContent = res.data.upvotes;
     btnEl.classList.toggle('voted', res.data.voted);
@@ -334,14 +377,19 @@ async function initForoIndex() {
 function renderSidebar() {
   var el = document.getElementById('foro-sidebar');
   if (!el) return;
+  var cats = F.categories.length
+    ? F.categories.map(function(c) {
+        return '<a class="foro-cat-item' + (F.catFilter === c.id ? ' active' : '') +
+          '" href="#" onclick="filterCat(' + c.id + ',event)">' +
+          '<span class="foro-cat-icon">' + esc(c.icon) + '</span> ' + esc(c.name) + '</a>';
+      }).join('')
+    : '<p style="font-size:12px;color:var(--c-muted);padding:4px 10px">Sin categorías</p>';
+
   el.innerHTML =
     '<p class="foro-sidebar-title">Categorías</p>' +
-    '<a class="foro-cat-item' + (F.catFilter === null ? ' active' : '') + '" href="#" onclick="filterCat(null,event)">' +
-    '<span class="foro-cat-icon">🎣</span> Todos los temas</a>' +
-    F.categories.map(function(c) {
-      return '<a class="foro-cat-item' + (F.catFilter === c.id ? ' active' : '') + '" href="#" onclick="filterCat(' + c.id + ',event)">' +
-        '<span class="foro-cat-icon">' + esc(c.icon) + '</span> ' + esc(c.name) + '</a>';
-    }).join('');
+    '<a class="foro-cat-item' + (F.catFilter === null ? ' active' : '') +
+    '" href="#" onclick="filterCat(null,event)">' +
+    '<span class="foro-cat-icon">🎣</span> Todos los temas</a>' + cats;
 }
 
 async function renderPostList() {
@@ -367,8 +415,6 @@ function renderPostCard(p) {
   var prf = p.profiles || {};
   var cat = p.categories || {};
   var name = prf.username || 'anónimo';
-  var icon = cat.icon || '🎣';
-  var catName = cat.name || '';
   var excerpt = p.body.length > 130 ? p.body.slice(0, 130) + '…' : p.body;
   return (
     '<article class="foro-post-card">' +
@@ -378,7 +424,8 @@ function renderPostCard(p) {
     '</div>' +
     '<div class="foro-post-content">' +
     '<div class="foro-post-meta">' +
-    '<span class="foro-badge">' + esc(icon) + ' ' + esc(catName) + '</span>' +
+    '<span class="foro-badge">' + esc(cat.icon || '🎣') + ' ' + esc(cat.name || '') + '</span>' +
+    avatarHtml(prf, 'foro-avatar-xs') +
     '<span class="foro-meta-text">por <strong>@' + esc(name) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
     '</div>' +
     '<a class="foro-post-title" href="/foro/post/?id=' + esc(p.id) + '">' + esc(p.title) + '</a>' +
@@ -429,13 +476,12 @@ function renderFullPost(p) {
   var prf = p.profiles || {};
   var cat = p.categories || {};
   var name = prf.username || 'anónimo';
-  var col = avatarColor(name);
   el.innerHTML =
     '<div class="foro-full-post">' +
     '<div class="foro-full-top"><span class="foro-badge">' + esc(cat.icon || '🎣') + ' ' + esc(cat.name || '') + '</span></div>' +
     '<h1 class="foro-full-title">' + esc(p.title) + '</h1>' +
     '<div class="foro-full-meta">' +
-    '<span class="foro-avatar foro-avatar-sm" style="background:' + col + '">' + esc(avatarChar(name)) + '</span>' +
+    avatarHtml(prf, 'foro-avatar-sm') +
     '<span class="foro-meta-text"><strong>@' + esc(name) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
     '</div>' +
     '<div class="foro-full-body"><p>' + nl2br(p.body) + '</p></div>' +
@@ -471,17 +517,17 @@ function renderCommentList(comments, postId) {
 function renderComment(c, replies, postId) {
   var prf = c.profiles || {};
   var name = prf.username || 'anónimo';
-  var col = avatarColor(name);
   return (
     '<div class="foro-comment" id="comment-' + esc(c.id) + '">' +
     '<div class="foro-comment-header">' +
-    '<span class="foro-avatar foro-avatar-xs" style="background:' + col + '">' + esc(avatarChar(name)) + '</span>' +
+    avatarHtml(prf, 'foro-avatar-xs') +
     '<strong class="foro-comment-author">@' + esc(name) + '</strong>' +
     '<span class="foro-meta-text">· ' + timeAgo(c.created_at) + '</span>' +
     '</div>' +
     '<div class="foro-comment-body"><p>' + nl2br(c.body) + '</p></div>' +
     '<div class="foro-comment-actions" data-vote-wrap>' +
-    '<button class="foro-vote-btn foro-vote-sm' + (F.votes.has(c.id) ? ' voted' : '') + '" data-comment-vote="' + esc(c.id) + '" data-id="' + esc(c.id) + '" title="Votar">▲ <span class="foro-vote-count vc">' + (c.upvotes || 0) + '</span></button>' +
+    '<button class="foro-vote-btn foro-vote-sm' + (F.votes.has(c.id) ? ' voted' : '') +
+    '" data-comment-vote="' + esc(c.id) + '" data-id="' + esc(c.id) + '" title="Votar">▲ <span class="foro-vote-count vc">' + (c.upvotes || 0) + '</span></button>' +
     (postId ? '<button class="foro-reply-btn" data-reply-to="' + esc(c.id) + '">Responder</button>' : '') +
     '</div>' +
     (replies.length ? '<div class="foro-comment-replies">' + replies.map(function(r) { return renderComment(r, [], null); }).join('') + '</div>' : '') +
@@ -505,7 +551,7 @@ function bindReplyBtns(container, postId) {
 function showReplyForm(parentId, postId) {
   var el = document.getElementById('reply-form-' + parentId);
   if (!el) return;
-  if (el.innerHTML.trim()) { el.innerHTML = ''; return; } // toggle
+  if (el.innerHTML.trim()) { el.innerHTML = ''; return; }
   el.innerHTML =
     '<form class="foro-reply-form" onsubmit="submitReply(event,\'' + esc(parentId) + '\',\'' + esc(postId) + '\')">' +
     '<textarea class="foro-textarea foro-textarea-sm" placeholder="Tu respuesta…" required rows="2"></textarea>' +
@@ -528,7 +574,7 @@ async function submitReply(e, parentId, postId) {
   if (formEl) formEl.innerHTML = '';
   var parentEl = document.getElementById('comment-' + parentId);
   if (parentEl && res.data) {
-    var fakeC = Object.assign({}, res.data, { profiles: { username: userName(F.profile) }, upvotes: 0 });
+    var fakeC = Object.assign({}, res.data, { profiles: F.profile || { username: userName(F.profile) }, upvotes: 0 });
     var repliesEl = parentEl.querySelector('.foro-comment-replies');
     if (!repliesEl) {
       repliesEl = document.createElement('div');
@@ -579,7 +625,7 @@ async function submitMainComment(e, postId) {
     var emptyEl = commentsEl && commentsEl.querySelector('.foro-empty');
     if (emptyEl) commentsEl.innerHTML = '';
     if (commentsEl) {
-      var fakeC = Object.assign({}, res.data, { profiles: { username: userName(F.profile) }, upvotes: 0 });
+      var fakeC = Object.assign({}, res.data, { profiles: F.profile || { username: userName(F.profile) }, upvotes: 0 });
       commentsEl.insertAdjacentHTML('beforeend', renderComment(fakeC, [], postId));
       var newEl = commentsEl.lastElementChild;
       bindCommentVotes(newEl);
@@ -639,12 +685,196 @@ async function handleNewPost(e) {
   if (res.data) location.href = '/foro/post/?id=' + res.data.id;
 }
 
+/* ── Página: PERFIL ──────────────────────────────────────────── */
+async function initForoPerfil() {
+  var el = document.getElementById('foro-perfil-area');
+  if (!el) return;
+
+  if (!F.user) {
+    el.innerHTML =
+      '<div class="foro-perfil-card" style="text-align:center;padding:48px 24px">' +
+      '<p style="color:var(--c-text2);margin-bottom:20px">Debes iniciar sesión para ver tu perfil.</p>' +
+      '<button class="foro-btn" onclick="showAuthModal(\'login\')">Entrar</button>' +
+      '</div>';
+    return;
+  }
+
+  renderPerfilForm();
+}
+
+function renderPerfilForm() {
+  var el = document.getElementById('foro-perfil-area');
+  if (!el) return;
+  var p = F.profile || {};
+  var name = userName(p);
+  var col = avatarColor(name);
+
+  var expOptions = [
+    ['', '— Nivel de experiencia —'],
+    ['beginner',     'Principiante (menos de 1 año)'],
+    ['intermediate', 'Intermedio (1–3 años)'],
+    ['advanced',     'Avanzado (3–7 años)'],
+    ['expert',       'Experto (+7 años)']
+  ].map(function(o) {
+    return '<option value="' + o[0] + '"' + (p.experience === o[0] ? ' selected' : '') + '>' + o[1] + '</option>';
+  }).join('');
+
+  el.innerHTML =
+    '<div class="foro-perfil-card">' +
+
+    /* Avatar */
+    '<div class="foro-perfil-avatar-wrap">' +
+    (p.avatar_url
+      ? '<img id="perfil-avatar-preview" class="foro-perfil-avatar-img" src="' + esc(p.avatar_url) + '" alt="Avatar">'
+      : '<div id="perfil-avatar-preview" class="foro-perfil-avatar-placeholder" style="background:' + col + '">' + esc(avatarChar(name)) + '</div>'
+    ) +
+    '<label class="foro-avatar-upload-label">' +
+    '<input type="file" id="avatar-file-input" accept="image/jpeg,image/png,image/webp" style="display:none" onchange="handleAvatarUpload(event)">' +
+    '<span class="foro-avatar-upload-btn">📷 Cambiar foto</span>' +
+    '</label>' +
+    '<p id="avatar-msg" class="foro-meta-text" style="font-size:11px;margin:4px 0 0;min-height:16px"></p>' +
+    '</div>' +
+
+    /* Formulario */
+    '<form id="perfil-form" onsubmit="handlePerfilSave(event)">' +
+
+    '<div class="foro-field">' +
+    '<label>Nombre de usuario</label>' +
+    '<input id="perfil-username" type="text" value="' + esc(p.username || '') +
+    '" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+" placeholder="ej: pescador_42" required>' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Email</label>' +
+    '<input type="email" value="' + esc((F.user && F.user.email) || '') + '" disabled class="foro-input-disabled">' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Bio <span class="foro-label-hint">(breve presentación, máx. 300 caracteres)</span></label>' +
+    '<textarea id="perfil-bio" class="foro-textarea" rows="3" maxlength="300" placeholder="Cuéntanos algo sobre ti como pescador…">' + esc(p.bio || '') + '</textarea>' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Zona habitual de pesca</label>' +
+    '<input id="perfil-zone" type="text" value="' + esc(p.fishing_zone || '') +
+    '" maxlength="100" placeholder="ej: Ríos del País Vasco, Costa mediterránea…">' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Especies preferidas</label>' +
+    '<input id="perfil-species" type="text" value="' + esc(p.species_prefs || '') +
+    '" maxlength="150" placeholder="ej: Trucha, Lucio, Lubina…">' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Nivel de experiencia</label>' +
+    '<select id="perfil-experience" class="foro-select">' + expOptions + '</select>' +
+    '</div>' +
+
+    '<p id="perfil-msg" class="foro-error" style="min-height:18px"></p>' +
+    '<button class="foro-btn" type="submit" id="perfil-save-btn">Guardar cambios</button>' +
+    '</form>' +
+    '</div>';
+}
+
+async function handlePerfilSave(e) {
+  e.preventDefault();
+  var msgEl = document.getElementById('perfil-msg');
+  var btn = document.getElementById('perfil-save-btn');
+  msgEl.textContent = ''; msgEl.className = 'foro-error';
+  btn.disabled = true; btn.textContent = 'Guardando…';
+
+  var newUsername = document.getElementById('perfil-username').value.trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (newUsername.length < 3) {
+    msgEl.textContent = 'El nombre de usuario necesita mínimo 3 caracteres.';
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+
+  var updates = {
+    id: F.user.id,
+    username: newUsername,
+    bio: document.getElementById('perfil-bio').value.trim() || null,
+    fishing_zone: document.getElementById('perfil-zone').value.trim() || null,
+    species_prefs: document.getElementById('perfil-species').value.trim() || null,
+    experience: document.getElementById('perfil-experience').value || null
+  };
+
+  var res = await sb.from('profiles').upsert(updates, { onConflict: 'id' });
+  if (res.error) {
+    msgEl.textContent = res.error.code === '23505' ? 'Ese nombre de usuario ya está en uso.' : res.error.message;
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+
+  F.profile = Object.assign({}, F.profile || {}, updates);
+  renderAuthBar();
+  msgEl.className = 'foro-success'; msgEl.textContent = '¡Perfil guardado correctamente!';
+  btn.disabled = false; btn.textContent = 'Guardar cambios';
+  setTimeout(function() { if (msgEl) { msgEl.textContent = ''; msgEl.className = 'foro-error'; } }, 3000);
+}
+
+async function handleAvatarUpload(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var msgEl = document.getElementById('avatar-msg');
+
+  if (file.size > 2 * 1024 * 1024) {
+    msgEl.textContent = 'Máximo 2 MB por imagen.'; msgEl.style.color = '#f87171'; return;
+  }
+  var allowed = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+  if (!allowed.includes(file.type)) {
+    msgEl.textContent = 'Solo JPG, PNG o WebP.'; msgEl.style.color = '#f87171'; return;
+  }
+
+  msgEl.textContent = 'Subiendo imagen…'; msgEl.style.color = 'var(--c-muted)';
+
+  var ext = file.name.split('.').pop().toLowerCase();
+  if (!['jpg','jpeg','png','webp'].includes(ext)) ext = 'jpg';
+  var path = F.user.id + '/avatar.' + ext;
+
+  var upRes = await sb.storage.from('avatars').upload(path, file, {
+    upsert: true,
+    contentType: file.type
+  });
+  if (upRes.error) {
+    msgEl.textContent = 'Error al subir: ' + upRes.error.message;
+    msgEl.style.color = '#f87171'; return;
+  }
+
+  var publicUrl = sb.storage.from('avatars').getPublicUrl(path).data.publicUrl;
+  /* Cache-bust para forzar recarga si el nombre de archivo es el mismo */
+  var displayUrl = publicUrl + '?t=' + Date.now();
+
+  var saveRes = await sb.from('profiles').upsert(
+    { id: F.user.id, avatar_url: publicUrl },
+    { onConflict: 'id' }
+  );
+  if (saveRes.error) {
+    msgEl.textContent = 'Error guardando URL: ' + saveRes.error.message;
+    msgEl.style.color = '#f87171'; return;
+  }
+
+  F.profile = Object.assign({}, F.profile || {}, { avatar_url: publicUrl });
+  renderAuthBar();
+
+  /* Actualizar preview */
+  var preview = document.getElementById('perfil-avatar-preview');
+  if (preview) {
+    if (preview.tagName === 'IMG') {
+      preview.src = displayUrl;
+    } else {
+      preview.outerHTML = '<img id="perfil-avatar-preview" class="foro-perfil-avatar-img" src="' + esc(displayUrl) + '" alt="Avatar">';
+    }
+  }
+  msgEl.textContent = '¡Avatar actualizado!'; msgEl.style.color = '#22c55e';
+  setTimeout(function() { if (msgEl) { msgEl.textContent = ''; } }, 4000);
+}
+
 /* ── Entrada principal ───────────────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async function() {
   if (!configOk()) {
     var banner = document.createElement('div');
     banner.className = 'foro-setup-banner';
-    banner.innerHTML = '⚠️ <strong>Configura Supabase:</strong> Edita <code>/assets/js/foro.js</code> y reemplaza <code>FORO_URL</code> y <code>FORO_KEY</code> con las credenciales de tu proyecto Supabase. <a href="/foro/setup.html" style="color:inherit;text-decoration:underline">Ver instrucciones →</a>';
+    banner.innerHTML = '⚠️ <strong>Configura Supabase:</strong> Edita <code>/assets/js/foro.js</code> y reemplaza <code>FORO_URL</code> y <code>FORO_KEY</code>.';
     var wrap = document.querySelector('.foro-wrap');
     if (wrap) wrap.insertAdjacentElement('afterbegin', banner);
     return;
@@ -655,7 +885,8 @@ document.addEventListener('DOMContentLoaded', async function() {
   await initAuth();
 
   var page = document.body.dataset.foroPage;
-  if (page === 'index') initForoIndex();
-  else if (page === 'post') initForoPost();
-  else if (page === 'nuevo') initNuevoPost();
+  if (page === 'index')  initForoIndex();
+  else if (page === 'post')   initForoPost();
+  else if (page === 'nuevo')  initNuevoPost();
+  else if (page === 'perfil') initForoPerfil();
 });

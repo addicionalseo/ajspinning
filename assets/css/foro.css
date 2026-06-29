@@ -135,11 +135,15 @@
   border-radius: 50%; font-weight: 700;
   display: inline-flex; align-items: center; justify-content: center;
   color: #04101e; flex-shrink: 0; user-select: none;
-  width: 32px; height: 32px; font-size: 14px;
+  width: 32px; height: 32px; font-size: 14px; overflow: hidden;
 }
 .foro-avatar-sm { width: 24px; height: 24px; font-size: 11px; }
 .foro-avatar-xs { width: 20px; height: 20px; font-size: 10px; }
-.foro-uname { font-size: 14px; color: var(--c-text, #cce4f8); font-weight: 600; }
+.foro-uname {
+  font-size: 14px; color: var(--c-text, #cce4f8); font-weight: 600;
+  text-decoration: none; transition: color .15s;
+}
+.foro-uname:hover { color: var(--c-primary, #4ab8f7); }
 
 /* ── Buttons ─────────────────────────────────────────────────── */
 .foro-btn {
@@ -359,4 +363,52 @@
 .foro-setup-banner code {
   background: rgba(248,113,113,.15); padding: 2px 6px;
   border-radius: 4px; font-size: 13px;
+}
+
+/* ── Perfil de usuario ───────────────────────────────────────── */
+.foro-perfil-card {
+  background: var(--c-surf, #081828);
+  border: 1px solid var(--c-border, #1a3555);
+  border-radius: 14px; padding: 28px;
+}
+
+.foro-perfil-avatar-wrap {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; margin-bottom: 28px; padding-bottom: 24px;
+  border-bottom: 1px solid var(--c-border, #1a3555);
+}
+.foro-perfil-avatar-img {
+  width: 88px; height: 88px; border-radius: 50%;
+  object-fit: cover; border: 3px solid var(--c-border, #1a3555);
+  display: block;
+}
+.foro-perfil-avatar-placeholder {
+  width: 88px; height: 88px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 36px; font-weight: 900; color: #04101e;
+  border: 3px solid var(--c-border, #1a3555);
+  user-select: none;
+}
+
+.foro-avatar-upload-label { cursor: pointer; }
+.foro-avatar-upload-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 16px; border-radius: 20px;
+  border: 1px solid var(--c-border, #1a3555);
+  color: var(--c-text2, #8ab8d6); font-size: 13px;
+  transition: all .15s; background: transparent;
+}
+.foro-avatar-upload-label:hover .foro-avatar-upload-btn {
+  border-color: var(--c-primary, #4ab8f7); color: var(--c-primary, #4ab8f7);
+}
+
+.foro-input-disabled {
+  width: 100%; padding: 10px 14px; box-sizing: border-box;
+  background: var(--c-bg, #04101e); border: 1px solid var(--c-border, #1a3555);
+  border-radius: 8px; color: var(--c-text2, #8ab8d6);
+  font-size: 14px; font-family: inherit; opacity: .55; cursor: not-allowed;
+}
+.foro-label-hint {
+  font-size: 10px; font-weight: 400; text-transform: none;
+  letter-spacing: 0; color: var(--c-muted, #547a99);
 }
