@@ -12,7 +12,7 @@
   <link rel="preload" href="/assets/fonts/saira-condensed-800.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="/assets/css/style.css?v=20260618-1">
   <link rel="stylesheet" href="/assets/css/premium.css?v=20260626-1">
-  <link rel="stylesheet" href="/assets/css/foro.css?v=20260629-1">
+  <link rel="stylesheet" href="/assets/css/foro.css?v=20260629-2">
 </head>
 <body data-foro-page="nuevo">
 <a href="#main-content" class="skip-link">Saltar al contenido</a>
@@ -75,6 +75,17 @@
             placeholder="Cuéntanos todo lo que quieras: zona de pesca, técnica usada, preguntas, dudas… cuanto más detalle, más útil será para la comunidad."></textarea>
         </div>
 
+        <div class="foro-field">
+          <label>Imágenes <span class="foro-label-hint">(opcional · máx. 4 · JPG, PNG o WebP · 3 MB c/u)</span></label>
+          <label class="foro-img-upload-label" for="post-images">
+            <span>📎 Añadir imágenes</span>
+            <input id="post-images" type="file"
+              accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp"
+              multiple>
+          </label>
+          <div id="post-images-preview" class="foro-img-preview-wrap"></div>
+        </div>
+
         <p id="post-error" class="foro-error" style="min-height:18px"></p>
 
         <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
@@ -120,6 +131,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="/assets/js/app.js?v=20260618-1"></script>
-<script src="/assets/js/foro.js?v=20260629-1"></script>
+<script src="/assets/js/foro.js?v=20260629-2"></script>
 </body>
 </html>

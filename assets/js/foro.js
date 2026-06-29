@@ -42,9 +42,14 @@ function avatarColor(name) {
   return cols[(name || '?').charCodeAt(0) % cols.length];
 }
 function userName(profile) {
+  if (profile && profile.display_name) return profile.display_name;
   if (profile && profile.username) return profile.username;
   if (F.user) return F.user.email.split('@')[0];
   return 'anónimo';
+}
+function userHandle(profile) {
+  var n = userName(profile);
+  return n.includes(' ') ? n : '@' + n;
 }
 
 /* Genera HTML de avatar: imagen real si hay avatar_url, sino inicial de color */
@@ -381,20 +386,44 @@ async function loadPosts(opts) {
   opts = opts || {};
   var q = sb.from('posts').select(
     'id,created_at,title,body,upvotes,comment_count,user_id,category_id,' +
-    'profiles(username,avatar_url),categories(slug,name,icon)'
+    'profiles(username,display_name,avatar_url),categories(slug,name,icon)'
   );
   if (opts.category) q = q.eq('category_id', opts.category);
   if (opts.sort === 'top') q = q.order('upvotes', { ascending: false });
   else q = q.order('created_at', { ascending: false });
   var res = await q.limit(opts.limit || 40);
-  return res.data || [];
+  if (!res.error) return res.data || [];
+  console.warn('[foro] loadPosts join failed:', JSON.stringify(res.error));
+  var q2 = sb.from('posts').select('id,created_at,title,body,upvotes,comment_count,user_id,category_id');
+  if (opts.category) q2 = q2.eq('category_id', opts.category);
+  if (opts.sort === 'top') q2 = q2.order('upvotes', { ascending: false });
+  else q2 = q2.order('created_at', { ascending: false });
+  var res2 = await q2.limit(opts.limit || 40);
+  if (res2.error) console.warn('[foro] loadPosts fallback failed:', JSON.stringify(res2.error));
+  return res2.data || [];
 }
 
 async function loadPost(id) {
   var res = await sb.from('posts')
-    .select('*,profiles(username,avatar_url),categories(slug,name,icon)')
+    .select('*,profiles(username,display_name,avatar_url),categories(slug,name,icon)')
     .eq('id', id).single();
-  return res.data || null;
+  if (!res.error) return res.data;
+  console.warn('[foro] loadPost join failed:', JSON.stringify(res.error));
+  var r2 = await sb.from('posts').select('*').eq('id', id).single();
+  if (r2.error) {
+    console.warn('[foro] loadPost fallback failed:', JSON.stringify(r2.error));
+    return null;
+  }
+  var post = r2.data;
+  if (post.user_id) {
+    var rp = await sb.from('profiles').select('username,display_name,avatar_url').eq('id', post.user_id).maybeSingle();
+    post.profiles = (rp && rp.data) || {};
+  }
+  if (post.category_id) {
+    var rc = await sb.from('categories').select('slug,name,icon').eq('id', post.category_id).maybeSingle();
+    post.categories = (rc && rc.data) || {};
+  }
+  return post;
 }
 
 async function createPost(catId, title, body) {
@@ -415,7 +444,7 @@ async function createPost(catId, title, body) {
 /* ── API: Comentarios ────────────────────────────────────────── */
 async function loadComments(postId) {
   var res = await sb.from('comments')
-    .select('*,profiles(username,avatar_url)')
+    .select('*,profiles(username,display_name,avatar_url)')
     .eq('post_id', postId)
     .order('created_at', { ascending: true });
   return res.data || [];
@@ -427,6 +456,96 @@ async function createComment(postId, body, parentId) {
   if (parentId) obj.parent_id = parentId;
   var res = await sb.from('comments').insert(obj).select('*,profiles(username,avatar_url)').single();
   return { data: res.data, error: res.error ? res.error.message : null };
+}
+
+/* ── API: Imágenes de posts ──────────────────────────────────── */
+async function loadPostImages(postId) {
+  var res = await sb.from('post_images').select('image_url,position').eq('post_id', postId).order('position');
+  return res.data || [];
+}
+
+async function uploadPostImages(postId, files, onProgress) {
+  for (var i = 0; i < files.length; i++) {
+    var file = files[i];
+    var ext = file.name.split('.').pop().toLowerCase();
+    if (!['jpg','jpeg','png','webp'].includes(ext)) ext = 'jpg';
+    var path = F.user.id + '/' + postId + '_' + i + '.' + ext;
+    var upRes = await sb.storage.from('forum-images').upload(path, file, { contentType: file.type });
+    if (upRes.error) return 'Error subiendo imagen ' + (i + 1) + ': ' + upRes.error.message;
+    var publicUrl = sb.storage.from('forum-images').getPublicUrl(path).data.publicUrl;
+    var imgRes = await sb.from('post_images').insert({
+      post_id: postId, user_id: F.user.id,
+      image_url: publicUrl, storage_path: path, position: i
+    });
+    if (imgRes.error) return 'Error guardando imagen ' + (i + 1) + ': ' + imgRes.error.message;
+    if (onProgress) onProgress(i + 1, files.length);
+  }
+  return null;
+}
+
+function renderPostGallery(images) {
+  if (!images || !images.length) return '';
+  return '<div class="foro-post-gallery">' +
+    images.map(function(img) {
+      return '<a href="' + esc(img.image_url) + '" target="_blank" rel="noopener" class="foro-gallery-item">' +
+        '<img src="' + esc(img.image_url) + '" alt="Imagen del post" loading="lazy" class="foro-gallery-img">' +
+        '</a>';
+    }).join('') +
+    '</div>';
+}
+
+var _postImageFiles = [];
+
+function initImageUploadInput() {
+  var input = document.getElementById('post-images');
+  var preview = document.getElementById('post-images-preview');
+  var errEl = document.getElementById('post-error');
+  if (!input || !preview) return;
+  input.addEventListener('change', function() {
+    _postImageFiles = [];
+    preview.innerHTML = '';
+    if (errEl) errEl.textContent = '';
+    var files = Array.from(input.files);
+    if (files.length > 4) {
+      if (errEl) errEl.textContent = 'Máximo 4 imágenes por post.';
+      input.value = ''; return;
+    }
+    var valid = true;
+    files.forEach(function(f) {
+      if (!['image/jpeg','image/jpg','image/png','image/webp'].includes(f.type)) {
+        if (errEl) errEl.textContent = '"' + f.name + '" no es válido. Solo JPG, PNG o WebP.';
+        valid = false;
+      } else if (f.size > 3 * 1024 * 1024) {
+        if (errEl) errEl.textContent = '"' + f.name + '" supera los 3 MB.';
+        valid = false;
+      }
+    });
+    if (!valid) { input.value = ''; return; }
+    _postImageFiles = files;
+    files.forEach(function(f, idx) {
+      var url = URL.createObjectURL(f);
+      var div = document.createElement('div');
+      div.className = 'foro-img-preview-item';
+      div.innerHTML =
+        '<img src="' + url + '" alt="Preview" class="foro-img-preview-thumb">' +
+        '<button type="button" class="foro-img-preview-remove" onclick="removePreviewImage(' + idx + ')">×</button>';
+      preview.appendChild(div);
+    });
+  });
+}
+
+function removePreviewImage(idx) {
+  _postImageFiles.splice(idx, 1);
+  var preview = document.getElementById('post-images-preview');
+  var input = document.getElementById('post-images');
+  if (preview) {
+    var items = preview.querySelectorAll('.foro-img-preview-item');
+    if (items[idx]) items[idx].remove();
+    preview.querySelectorAll('.foro-img-preview-remove').forEach(function(btn, i) {
+      btn.setAttribute('onclick', 'removePreviewImage(' + i + ')');
+    });
+  }
+  if (input) input.value = '';
 }
 
 /* ── Votos (via toggle_vote RPC atómico) ────────────────────── */
@@ -509,8 +628,7 @@ async function renderPostList() {
 function renderPostCard(p) {
   var prf = p.profiles || {};
   var cat = p.categories || {};
-  var name = prf.username || 'anónimo';
-  var excerpt = p.body.length > 130 ? p.body.slice(0, 130) + '…' : p.body;
+  var excerpt = (p.body || '').length > 130 ? p.body.slice(0, 130) + '…' : (p.body || '');
   return (
     '<article class="foro-post-card">' +
     '<div class="foro-vote-col" data-vote-wrap>' +
@@ -521,7 +639,7 @@ function renderPostCard(p) {
     '<div class="foro-post-meta">' +
     '<span class="foro-badge">' + esc(cat.icon || '🎣') + ' ' + esc(cat.name || '') + '</span>' +
     avatarHtml(prf, 'foro-avatar-xs') +
-    '<span class="foro-meta-text">por <strong>@' + esc(name) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
+    '<span class="foro-meta-text">por <strong>' + esc(userHandle(prf)) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
     '</div>' +
     '<a class="foro-post-title" href="/foro/post/?id=' + esc(p.id) + '">' + esc(p.title) + '</a>' +
     '<p class="foro-post-excerpt">' + esc(excerpt) + '</p>' +
@@ -554,12 +672,19 @@ async function initForoPost() {
   var post = await loadPost(postId);
   if (!post) {
     var area = document.getElementById('foro-post-area');
-    if (area) area.innerHTML = '<p class="foro-error" style="padding:32px">Post no encontrado.</p>';
+    if (area) area.innerHTML =
+      '<p class="foro-error" style="padding:32px">Post no encontrado o error al cargarlo.' +
+      ' Revisa la consola del navegador para ver el error real.</p>';
     return;
   }
 
   document.title = esc(post.title) + ' · Foro AJSpinning';
   renderFullPost(post);
+
+  var images = await loadPostImages(postId);
+  var galleryEl = document.getElementById('post-images-gallery');
+  if (galleryEl && images.length) galleryEl.innerHTML = renderPostGallery(images);
+
   var comments = await loadComments(postId);
   renderCommentList(comments, postId);
   renderCommentForm(postId);
@@ -570,16 +695,16 @@ function renderFullPost(p) {
   if (!el) return;
   var prf = p.profiles || {};
   var cat = p.categories || {};
-  var name = prf.username || 'anónimo';
   el.innerHTML =
     '<div class="foro-full-post">' +
     '<div class="foro-full-top"><span class="foro-badge">' + esc(cat.icon || '🎣') + ' ' + esc(cat.name || '') + '</span></div>' +
     '<h1 class="foro-full-title">' + esc(p.title) + '</h1>' +
     '<div class="foro-full-meta">' +
     avatarHtml(prf, 'foro-avatar-sm') +
-    '<span class="foro-meta-text"><strong>@' + esc(name) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
+    '<span class="foro-meta-text"><strong>' + esc(userHandle(prf)) + '</strong> · ' + timeAgo(p.created_at) + '</span>' +
     '</div>' +
     '<div class="foro-full-body"><p>' + nl2br(p.body) + '</p></div>' +
+    '<div id="post-images-gallery"></div>' +
     '<div class="foro-full-actions" data-vote-wrap>' +
     '<button class="foro-vote-inline" id="post-vote-btn" data-id="' + esc(p.id) + '">▲ <span class="foro-vote-count">' + (p.upvotes || 0) + '</span> votos</button>' +
     '<span class="foro-meta-text">💬 <span id="post-comment-count">' + (p.comment_count || 0) + '</span> comentarios</span>' +
@@ -611,12 +736,11 @@ function renderCommentList(comments, postId) {
 
 function renderComment(c, replies, postId) {
   var prf = c.profiles || {};
-  var name = prf.username || 'anónimo';
   return (
     '<div class="foro-comment" id="comment-' + esc(c.id) + '">' +
     '<div class="foro-comment-header">' +
     avatarHtml(prf, 'foro-avatar-xs') +
-    '<strong class="foro-comment-author">@' + esc(name) + '</strong>' +
+    '<strong class="foro-comment-author">' + esc(userHandle(prf)) + '</strong>' +
     '<span class="foro-meta-text">· ' + timeAgo(c.created_at) + '</span>' +
     '</div>' +
     '<div class="foro-comment-body"><p>' + nl2br(c.body) + '</p></div>' +
@@ -754,9 +878,10 @@ async function initNuevoPost() {
   var charCount = document.getElementById('title-chars');
   if (titleIn && charCount) {
     titleIn.addEventListener('input', function() {
-      charCount.textContent = titleIn.value.length + '/200';
+      charCount.textContent = titleIn.value.length;
     });
   }
+  initImageUploadInput();
 }
 
 async function handleNewPost(e) {
@@ -773,11 +898,23 @@ async function handleNewPost(e) {
   btn.disabled = true; btn.textContent = 'Publicando…';
   var res = await createPost(catId, title, body);
   if (res.error && res.error !== 'login' && res.error !== 'username') {
-    errEl.textContent = res.error;
-    btn.disabled = false; btn.textContent = 'Publicar';
+    errEl.textContent = 'Error al publicar: ' + res.error;
+    btn.disabled = false; btn.textContent = 'Publicar post';
     return;
   }
-  if (res.data) location.href = '/foro/post/?id=' + res.data.id;
+  if (!res.data) return;
+  if (_postImageFiles.length > 0) {
+    btn.textContent = 'Subiendo imágenes (0/' + _postImageFiles.length + ')…';
+    var imgErr = await uploadPostImages(res.data.id, _postImageFiles, function(done, total) {
+      btn.textContent = 'Subiendo imágenes (' + done + '/' + total + ')…';
+    });
+    if (imgErr) {
+      errEl.textContent = imgErr;
+      btn.disabled = false; btn.textContent = 'Publicar post';
+      return;
+    }
+  }
+  location.href = '/foro/post/?id=' + res.data.id;
 }
 
 /* ── Página: PERFIL ──────────────────────────────────────────── */
@@ -834,7 +971,13 @@ function renderPerfilForm() {
     '<form id="perfil-form" onsubmit="handlePerfilSave(event)">' +
 
     '<div class="foro-field">' +
-    '<label>Nombre de usuario</label>' +
+    '<label>Nombre público <span class="foro-label-hint">(visible en posts y comentarios · puede tener espacios)</span></label>' +
+    '<input id="perfil-display-name" type="text" value="' + esc(p.display_name || '') +
+    '" minlength="3" maxlength="40" placeholder="ej: Far del Sud, Jordi Delta, Pescador del Ebro…">' +
+    '</div>' +
+
+    '<div class="foro-field">' +
+    '<label>Nombre de usuario <span class="foro-label-hint">(identificador único sin espacios)</span></label>' +
     '<input id="perfil-username" type="text" value="' + esc(p.username || '') +
     '" minlength="3" maxlength="20" pattern="[a-zA-Z0-9_]+" placeholder="ej: pescador_42" required>' +
     '</div>' +
@@ -885,9 +1028,24 @@ async function handlePerfilSave(e) {
     btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
   }
 
+  var newDisplayName = (document.getElementById('perfil-display-name').value || '').trim();
+  if (newDisplayName && newDisplayName.length < 3) {
+    msgEl.textContent = 'El nombre público necesita mínimo 3 caracteres.';
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+  if (newDisplayName.length > 40) {
+    msgEl.textContent = 'El nombre público no puede superar los 40 caracteres.';
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+  if (/[<>{}\[\]\\^`|;=*]/.test(newDisplayName)) {
+    msgEl.textContent = 'El nombre público contiene caracteres no permitidos.';
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+
   var updates = {
     id: F.user.id,
     username: newUsername,
+    display_name: newDisplayName || null,
     bio: document.getElementById('perfil-bio').value.trim() || null,
     fishing_zone: document.getElementById('perfil-zone').value.trim() || null,
     species_prefs: document.getElementById('perfil-species').value.trim() || null,

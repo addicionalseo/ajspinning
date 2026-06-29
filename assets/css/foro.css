@@ -436,3 +436,59 @@
   font-size: 10px; font-weight: 400; text-transform: none;
   letter-spacing: 0; color: var(--c-muted, #547a99);
 }
+
+/* ── Galería de imágenes en post ─────────────────────────────── */
+.foro-post-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+  margin: 16px 0 24px;
+}
+.foro-gallery-item {
+  display: block; border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--c-border, #1a3555);
+  transition: border-color .15s;
+}
+.foro-gallery-item:hover { border-color: var(--c-primary, #4ab8f7); }
+.foro-gallery-img {
+  width: 100%; aspect-ratio: 4/3;
+  object-fit: cover; display: block;
+}
+@media (max-width: 580px) {
+  .foro-post-gallery { grid-template-columns: 1fr 1fr; }
+}
+
+/* ── Upload de imágenes en nuevo post ────────────────────────── */
+.foro-img-upload-label {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 16px; border-radius: 8px; cursor: pointer;
+  border: 1.5px dashed var(--c-border, #1a3555);
+  color: var(--c-text2, #8ab8d6); font-size: 13px;
+  transition: border-color .15s, color .15s;
+  background: transparent; width: 100%; box-sizing: border-box;
+}
+.foro-img-upload-label:hover {
+  border-color: var(--c-primary, #4ab8f7); color: var(--c-primary, #4ab8f7);
+}
+.foro-img-upload-label input[type="file"] { display: none; }
+
+.foro-img-preview-wrap {
+  display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;
+}
+.foro-img-preview-item {
+  position: relative; width: 90px; height: 90px;
+  border-radius: 8px; overflow: hidden;
+  border: 1px solid var(--c-border, #1a3555);
+}
+.foro-img-preview-thumb {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.foro-img-preview-remove {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(4,16,30,.75); border: none; color: #f87171;
+  border-radius: 50%; width: 20px; height: 20px; font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; line-height: 1; padding: 0;
+  transition: background .15s;
+}
+.foro-img-preview-remove:hover { background: rgba(248,113,113,.25); }
