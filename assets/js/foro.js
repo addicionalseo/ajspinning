@@ -717,10 +717,12 @@ function republicarPost() {
   var p = _currentPost;
   if (!p) return;
   if (!F.user) { showAuthModal('login'); return; }
+  var author = userHandle(p.profiles || {});
+  var postUrl = location.origin + '/foro/post/?id=' + p.id;
   var lines = (p.body || '').split('\n').slice(0, 4);
   var quote = lines.map(function(l) { return '> ' + l; }).join('\n');
   if ((p.body || '').split('\n').length > 4) quote += '\n> [...]';
-  var body = quote + '\n\n';
+  var body = author + ' publicó en ' + postUrl + ':\n' + quote + '\n\n';
   location.href = '/foro/nuevo/?title=' + encodeURIComponent('Re: ' + p.title) +
     '&body=' + encodeURIComponent(body);
 }
