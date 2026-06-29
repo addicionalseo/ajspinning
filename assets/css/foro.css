@@ -508,7 +508,57 @@
   white-space: nowrap;
 }
 .foro-social-btn:hover { border-color: var(--c-primary, #4ab8f7); color: var(--c-primary, #4ab8f7); }
-.foro-whatsapp-btn:hover { border-color: #22c55e; color: #22c55e; }
+
+/* ── Panel de compartir (bottom sheet) ───────────────────────── */
+.foro-share-panel {
+  position: fixed; inset: 0;
+  background: rgba(4,16,30,.72);
+  z-index: 9990; display: flex;
+  align-items: flex-end; justify-content: center;
+  opacity: 0; transition: opacity .2s; pointer-events: none;
+}
+.foro-share-panel.show { opacity: 1; pointer-events: all; }
+
+.foro-share-inner {
+  background: var(--c-surf, #081828);
+  border: 1px solid var(--c-border, #1a3555);
+  border-bottom: none; border-radius: 18px 18px 0 0;
+  padding: 20px 18px 32px; width: 100%; max-width: 520px;
+  transform: translateY(40px); transition: transform .25s;
+}
+.foro-share-panel.show .foro-share-inner { transform: translateY(0); }
+
+.foro-share-label {
+  font-size: 11px; font-weight: 700; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--c-muted, #547a99);
+  margin: 0 0 16px;
+}
+.foro-share-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  margin-bottom: 16px;
+}
+@media (min-width: 380px) { .foro-share-grid { grid-template-columns: repeat(4, 1fr); } }
+
+.foro-share-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 12px 4px; border-radius: 10px;
+  background: var(--c-bg, #04101e);
+  border: 1px solid var(--c-border, #1a3555);
+  color: var(--c-text2, #8ab8d6); font-size: 11px; text-align: center;
+  cursor: pointer; text-decoration: none; font-family: inherit;
+  transition: border-color .15s, color .15s;
+}
+.foro-share-item:hover { border-color: var(--c-primary, #4ab8f7); color: var(--c-primary, #4ab8f7); }
+.foro-share-icon { font-size: 22px; line-height: 1; font-style: normal; }
+
+.foro-share-close {
+  display: block; width: 100%; padding: 11px;
+  border-radius: 10px; background: none;
+  border: 1px solid var(--c-border, #1a3555);
+  color: var(--c-muted, #547a99); font-size: 13px;
+  cursor: pointer; font-family: inherit; transition: color .15s;
+}
+.foro-share-close:hover { color: var(--c-text, #cce4f8); }
 
 /* ── Toast de confirmación ───────────────────────────────────── */
 .foro-toast {

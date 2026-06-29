@@ -677,15 +677,67 @@ function respondPost() {
   }, 420);
 }
 
-function sharePost(title) {
-  var url = location.origin + '/foro/post/?id=' + (_currentPost ? _currentPost.id : '');
-  if (navigator.share) {
-    navigator.share({ title: title, url: url }).catch(function(e) {
-      if (e.name !== 'AbortError') copyPostLink(url);
-    });
-  } else {
-    copyPostLink(url);
-  }
+function showSharePanel() {
+  if (document.getElementById('foro-share-panel')) { closeSharePanel(); return; }
+  var p = _currentPost;
+  if (!p) return;
+  var url  = location.origin + '/foro/post/?id=' + p.id;
+  var uEnc = encodeURIComponent(url);
+  var tEnc = encodeURIComponent(p.title);
+  var full = encodeURIComponent(p.title + ' — ' + url);
+
+  var panel = document.createElement('div');
+  panel.id = 'foro-share-panel';
+  panel.className = 'foro-share-panel';
+  panel.innerHTML =
+    '<div class="foro-share-inner">' +
+    '<p class="foro-share-label">Compartir este post</p>' +
+    '<div class="foro-share-grid">' +
+    '<button type="button" class="foro-share-item" onclick="copyAndCloseSharePanel()">' +
+      '<span class="foro-share-icon">🔗</span><span>Copiar enlace</span></button>' +
+    '<a class="foro-share-item" href="https://api.whatsapp.com/send?text=' + full + '" target="_blank" rel="noopener">' +
+      '<span class="foro-share-icon">📲</span><span>WhatsApp</span></a>' +
+    '<a class="foro-share-item" href="https://www.facebook.com/sharer/sharer.php?u=' + uEnc + '" target="_blank" rel="noopener">' +
+      '<span class="foro-share-icon">📘</span><span>Facebook</span></a>' +
+    '<a class="foro-share-item" href="https://twitter.com/intent/tweet?text=' + tEnc + '&url=' + uEnc + '" target="_blank" rel="noopener">' +
+      '<span class="foro-share-icon">𝕏</span><span>Twitter / X</span></a>' +
+    '<a class="foro-share-item" href="https://t.me/share/url?url=' + uEnc + '&text=' + tEnc + '" target="_blank" rel="noopener">' +
+      '<span class="foro-share-icon">✈️</span><span>Telegram</span></a>' +
+    '<a class="foro-share-item" href="mailto:?subject=' + tEnc + '&body=' + full + '">' +
+      '<span class="foro-share-icon">📧</span><span>Email</span></a>' +
+    (navigator.share
+      ? '<button type="button" class="foro-share-item" onclick="nativeShare()">' +
+        '<span class="foro-share-icon">📸</span><span>Instagram y más</span></button>'
+      : '') +
+    '</div>' +
+    '<button type="button" class="foro-share-close" onclick="closeSharePanel()">Cerrar</button>' +
+    '</div>';
+
+  document.body.appendChild(panel);
+  requestAnimationFrame(function() { panel.classList.add('show'); });
+  panel.addEventListener('click', function(e) { if (e.target === panel) closeSharePanel(); });
+}
+
+function closeSharePanel() {
+  var p = document.getElementById('foro-share-panel');
+  if (!p) return;
+  p.classList.remove('show');
+  setTimeout(function() { if (p.parentNode) p.remove(); }, 220);
+}
+
+function copyAndCloseSharePanel() {
+  var p = _currentPost;
+  if (p) copyPostLink(location.origin + '/foro/post/?id=' + p.id);
+  closeSharePanel();
+}
+
+async function nativeShare() {
+  var p = _currentPost;
+  if (!p) return;
+  var url = location.origin + '/foro/post/?id=' + p.id;
+  closeSharePanel();
+  try { await navigator.share({ title: p.title, url: url }); }
+  catch(e) { if (e.name !== 'AbortError') copyPostLink(url); }
 }
 
 function copyPostLink(url) {
@@ -849,10 +901,7 @@ function renderFullPost(p) {
     '</div>' +
     '<div class="foro-post-social">' +
     '<button class="foro-social-btn" onclick="respondPost()">💬 Responder</button>' +
-    '<button class="foro-social-btn" onclick="sharePost(' + JSON.stringify(p.title) + ')">🔗 Compartir</button>' +
-    '<a class="foro-social-btn foro-whatsapp-btn" href="https://api.whatsapp.com/send?text=' +
-      encodeURIComponent(p.title + ' — ' + location.origin + '/foro/post/?id=' + p.id) +
-    '" target="_blank" rel="noopener">📲 WhatsApp</a>' +
+    '<button class="foro-social-btn" onclick="showSharePanel()">🔗 Compartir</button>' +
     '<button class="foro-social-btn" onclick="republicarPost()">🔄 Republicar</button>' +
     '</div></div>';
 
