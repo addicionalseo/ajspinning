@@ -492,3 +492,12 @@
   transition: background .15s;
 }
 .foro-img-preview-remove:hover { background: rgba(248,113,113,.25); }
+
+/* ── Botón eliminar post ─────────────────────────────────────── */
+.foro-delete-btn {
+  margin-left: auto; background: none; border: 1px solid #7f1d1d;
+  color: #f87171; padding: 5px 12px; border-radius: 6px;
+  font-size: 12px; cursor: pointer; font-family: inherit;
+  transition: background .15s, color .15s;
+}
+.foro-delete-btn:hover { background: rgba(248,113,113,.12); color: #fca5a5; }

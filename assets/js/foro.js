@@ -664,6 +664,20 @@ async function sortBy(s) {
   await renderPostList();
 }
 
+async function deletePost(postId) {
+  if (!confirm('¿Seguro que quieres eliminar este post? Esta acción no se puede deshacer.')) return;
+  var btn = document.querySelector('.foro-delete-btn');
+  if (btn) { btn.disabled = true; btn.textContent = 'Eliminando…'; }
+  var res = await sb.from('posts').delete().eq('id', postId);
+  if (res.error) {
+    console.warn('[foro] deletePost error:', JSON.stringify(res.error));
+    alert('Error al eliminar: ' + res.error.message);
+    if (btn) { btn.disabled = false; btn.textContent = '🗑 Eliminar post'; }
+    return;
+  }
+  location.href = '/foro/';
+}
+
 /* ── Página: POST INDIVIDUAL ─────────────────────────────────── */
 async function initForoPost() {
   var postId = new URLSearchParams(location.search).get('id');
@@ -708,6 +722,9 @@ function renderFullPost(p) {
     '<div class="foro-full-actions" data-vote-wrap>' +
     '<button class="foro-vote-inline" id="post-vote-btn" data-id="' + esc(p.id) + '">▲ <span class="foro-vote-count">' + (p.upvotes || 0) + '</span> votos</button>' +
     '<span class="foro-meta-text">💬 <span id="post-comment-count">' + (p.comment_count || 0) + '</span> comentarios</span>' +
+    (F.user && F.user.id === p.user_id
+      ? '<button class="foro-delete-btn" onclick="deletePost(\'' + esc(p.id) + '\')">🗑 Eliminar post</button>'
+      : '') +
     '</div></div>';
 
   var btn = el.querySelector('#post-vote-btn');
