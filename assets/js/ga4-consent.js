@@ -1,74 +1,68 @@
 (function () {
   var GA_ID = 'G-HP8MCG44T1';
-  var CONSENT_KEY = 'ajspinning_cookie_consent';
+  var CONSENT_KEY = 'ajspinning_cookie_consent_v1';
 
-  function hasAcceptedCookies() {
-    try {
-      var v = localStorage.getItem(CONSENT_KEY);
-      if (v === 'accepted') return true;
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function(){ dataLayer.push(arguments); };
 
-      var all = '';
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        all += ' ' + k + '=' + localStorage.getItem(k);
-      }
+  // Consent Mode: carregar l'etiqueta, però sense cookies fins acceptació.
+  gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied'
+  });
 
-      all += ' ' + document.cookie;
-      all = all.toLowerCase();
-
-      return (
-        all.includes('accepted') ||
-        all.includes('accept') ||
-        all.includes('acept') ||
-        all.includes('granted') ||
-        all.includes('all')
-      );
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function hasRejectedCookies() {
-    try {
-      var v = localStorage.getItem(CONSENT_KEY);
-      if (v === 'rejected') return true;
-
-      var all = '';
-      for (var i = 0; i < localStorage.length; i++) {
-        var k = localStorage.key(i);
-        all += ' ' + k + '=' + localStorage.getItem(k);
-      }
-
-      all += ' ' + document.cookie;
-      all = all.toLowerCase();
-
-      return (
-        all.includes('rejected') ||
-        all.includes('reject') ||
-        all.includes('rechaz')
-      );
-    } catch (e) {
-      return false;
-    }
-  }
-
-  function loadGA4() {
-    if (window.__aj_ga4_loaded) return;
-    window.__aj_ga4_loaded = true;
-
-    window.dataLayer = window.dataLayer || [];
-    window.gtag = function(){ dataLayer.push(arguments); };
+  function loadGtagBase() {
+    if (window.__aj_ga4_base_loaded) return;
+    window.__aj_ga4_base_loaded = true;
 
     var s = document.createElement('script');
     s.async = true;
     s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
     document.head.appendChild(s);
 
-    window.gtag('js', new Date());
-    window.gtag('config', GA_ID);
+    gtag('js', new Date());
+    gtag('config', GA_ID, {
+      anonymize_ip: true
+    });
   }
 
-  window.ajLoadGA4 = loadGA4;
+  function setConsentAccepted() {
+    try { localStorage.setItem(CONSENT_KEY, 'accepted'); } catch (e) {}
+    gtag('consent', 'update', {
+      analytics_storage: 'granted',
+      ad_storage: 'granted',
+      ad_user_data: 'granted',
+      ad_personalization: 'granted'
+    });
+  }
+
+  function setConsentRejected() {
+    try { localStorage.setItem(CONSENT_KEY, 'rejected'); } catch (e) {}
+    gtag('consent', 'update', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied'
+    });
+  }
+
+  function getConsentValue() {
+    try {
+      return localStorage.getItem(CONSENT_KEY);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Carregar sempre la base perquè Google detecti la etiqueta.
+  loadGtagBase();
+
+  // Si ja havia acceptat abans, actualitzar consentiment.
+  if (getConsentValue() === 'accepted') {
+    setConsentAccepted();
+  }
 
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('button, a');
@@ -78,24 +72,17 @@
 
     if (
       txt.includes('aceptar') ||
-      txt.includes('acceptar') ||
-      txt.includes('acepta todas') ||
-      txt.includes('aceptar todas')
+      txt.includes('aceptar todas') ||
+      txt.includes('acepta todas')
     ) {
-      try { localStorage.setItem(CONSENT_KEY, 'accepted'); } catch (e) {}
-      loadGA4();
+      setConsentAccepted();
     }
 
     if (
       txt.includes('rechazar') ||
-      txt.includes('rebutjar') ||
-      txt.includes('reject')
+      txt.includes('rechazar todas')
     ) {
-      try { localStorage.setItem(CONSENT_KEY, 'rejected'); } catch (e) {}
+      setConsentRejected();
     }
   });
-
-  if (hasAcceptedCookies() && !hasRejectedCookies()) {
-    loadGA4();
-  }
 })();
