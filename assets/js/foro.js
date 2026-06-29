@@ -666,6 +666,65 @@ async function sortBy(s) {
   await renderPostList();
 }
 
+/* ── Acciones sociales del post ──────────────────────────────── */
+function respondPost() {
+  if (!F.user) { showAuthModal('login'); return; }
+  var anchor = document.getElementById('foro-add-comment');
+  if (anchor) anchor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setTimeout(function() {
+    var ta = document.getElementById('main-comment-ta');
+    if (ta) ta.focus();
+  }, 420);
+}
+
+function sharePost(title) {
+  var url = location.origin + '/foro/post/?id=' + (_currentPost ? _currentPost.id : '');
+  if (navigator.share) {
+    navigator.share({ title: title, url: url }).catch(function(e) {
+      if (e.name !== 'AbortError') copyPostLink(url);
+    });
+  } else {
+    copyPostLink(url);
+  }
+}
+
+function copyPostLink(url) {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(url).then(function() { showToast('¡Enlace copiado!'); });
+  } else {
+    var ta = document.createElement('textarea');
+    ta.value = url; ta.style.position = 'fixed'; ta.style.top = '-9999px';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); showToast('¡Enlace copiado!'); } catch(e) {}
+    document.body.removeChild(ta);
+  }
+}
+
+function showToast(msg) {
+  var t = document.getElementById('foro-toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'foro-toast'; t.className = 'foro-toast';
+    document.body.appendChild(t);
+  }
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+
+function republicarPost() {
+  var p = _currentPost;
+  if (!p) return;
+  if (!F.user) { showAuthModal('login'); return; }
+  var lines = (p.body || '').split('\n').slice(0, 4);
+  var quote = lines.map(function(l) { return '> ' + l; }).join('\n');
+  if ((p.body || '').split('\n').length > 4) quote += '\n> [...]';
+  var body = quote + '\n\n';
+  location.href = '/foro/nuevo/?title=' + encodeURIComponent('Re: ' + p.title) +
+    '&body=' + encodeURIComponent(body);
+}
+
 async function editPost() {
   var p = _currentPost;
   if (!p) return;
@@ -785,6 +844,14 @@ function renderFullPost(p) {
     '<div class="foro-full-actions" data-vote-wrap>' +
     '<button class="foro-vote-inline" id="post-vote-btn" data-id="' + esc(p.id) + '">▲ <span class="foro-vote-count">' + (p.upvotes || 0) + '</span> votos</button>' +
     '<span class="foro-meta-text">💬 <span id="post-comment-count">' + (p.comment_count || 0) + '</span> comentarios</span>' +
+    '</div>' +
+    '<div class="foro-post-social">' +
+    '<button class="foro-social-btn" onclick="respondPost()">💬 Responder</button>' +
+    '<button class="foro-social-btn" onclick="sharePost(' + JSON.stringify(p.title) + ')">🔗 Compartir</button>' +
+    '<a class="foro-social-btn foro-whatsapp-btn" href="https://api.whatsapp.com/send?text=' +
+      encodeURIComponent(p.title + ' — ' + location.origin + '/foro/post/?id=' + p.id) +
+    '" target="_blank" rel="noopener">📲 WhatsApp</a>' +
+    '<button class="foro-social-btn" onclick="republicarPost()">🔄 Republicar</button>' +
     '</div></div>';
 
   var btn = el.querySelector('#post-vote-btn');
@@ -950,6 +1017,15 @@ async function initNuevoPost() {
     var wrap = document.getElementById('nuevo-form-wrap');
     if (wrap) wrap.style.opacity = '0.5';
     showAuthModal('login');
+  }
+  var qp = new URLSearchParams(location.search);
+  if (qp.get('title')) {
+    var tEl = document.getElementById('post-title');
+    if (tEl) tEl.value = qp.get('title');
+  }
+  if (qp.get('body')) {
+    var bEl = document.getElementById('post-body');
+    if (bEl) bEl.value = qp.get('body');
   }
   var titleIn = document.getElementById('post-title');
   var charCount = document.getElementById('title-chars');
