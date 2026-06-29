@@ -229,6 +229,30 @@
 .foro-error { color: #f87171; font-size: 13px; min-height: 18px; margin: 8px 0; }
 .foro-success { color: #22c55e; font-size: 13px; margin: 8px 0; }
 
+/* ── Password visibility toggle ──────────────────────────────── */
+.foro-pw-wrap {
+  position: relative; display: flex; align-items: center;
+}
+.foro-pw-wrap input {
+  padding-right: 42px; width: 100%; box-sizing: border-box;
+}
+.foro-pw-eye {
+  position: absolute; right: 10px;
+  background: none; border: none; cursor: pointer;
+  color: var(--c-muted, #547a99); padding: 4px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 4px; transition: color .15s; line-height: 1;
+  flex-shrink: 0;
+}
+.foro-pw-eye:hover { color: var(--c-text, #cce4f8); }
+
+.foro-link-btn {
+  background: none; border: none; cursor: pointer; padding: 0;
+  color: var(--c-primary, #4ab8f7); font-size: 12px;
+  font-family: inherit; text-decoration: underline; transition: opacity .15s;
+}
+.foro-link-btn:hover { opacity: .75; }
+
 /* ── Full post view ──────────────────────────────────────────── */
 .foro-full-post {
   background: var(--c-surf, #081828);

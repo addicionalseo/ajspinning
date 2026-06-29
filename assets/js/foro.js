@@ -60,6 +60,18 @@ function avatarHtml(prf, cls) {
   return '<span class="foro-avatar' + clsStr + '" style="background:' + col + '">' + esc(avatarChar(name)) + '</span>';
 }
 
+/* SVG del ojo para mostrar/ocultar contraseña */
+var _SVG_EYE = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+var _SVG_EYE_OFF = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+
+function togglePw(inputId, btn) {
+  var inp = document.getElementById(inputId);
+  var show = inp.type === 'password';
+  inp.type = show ? 'text' : 'password';
+  btn.innerHTML = show ? _SVG_EYE_OFF : _SVG_EYE;
+  btn.setAttribute('aria-label', show ? 'Ocultar contraseña' : 'Mostrar contraseña');
+}
+
 /* ── Verificar config ────────────────────────────────────────── */
 function configOk() {
   return !FORO_URL.includes('XXXXXXXX') && !FORO_KEY.includes('ANON_KEY');
@@ -77,15 +89,33 @@ function injectModals() {
     '<p id="modal-msg" class="foro-error" style="min-height:18px"></p>' +
     '<form id="form-login" onsubmit="handleLogin(event)">' +
     '<div class="foro-field"><label>Email</label><input id="login-email" type="email" required autocomplete="email" placeholder="tu@email.com"></div>' +
-    '<div class="foro-field"><label>Contraseña</label><input id="login-pw" type="password" required autocomplete="current-password" placeholder="Tu contraseña"></div>' +
+    '<div class="foro-field"><label>Contraseña</label><div class="foro-pw-wrap"><input id="login-pw" type="password" required autocomplete="current-password" placeholder="Tu contraseña"><button type="button" class="foro-pw-eye" onclick="togglePw(\'login-pw\',this)" tabindex="-1" aria-label="Mostrar contraseña">' + _SVG_EYE + '</button></div></div>' +
     '<button class="foro-btn foro-btn-block" type="submit">Entrar</button>' +
+    '<p style="text-align:right;margin:8px 0 0"><button type="button" class="foro-link-btn" onclick="showForgotForm()">¿Olvidaste tu contraseña?</button></p>' +
     '</form>' +
     '<form id="form-register" style="display:none" onsubmit="handleRegister(event)">' +
     '<div class="foro-field"><label>Email</label><input id="reg-email" type="email" required autocomplete="email" placeholder="tu@email.com"></div>' +
-    '<div class="foro-field"><label>Contraseña</label><input id="reg-pw" type="password" required autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>' +
-    '<div class="foro-field"><label>Repite contraseña</label><input id="reg-pw2" type="password" required autocomplete="new-password"></div>' +
+    '<div class="foro-field"><label>Contraseña</label><div class="foro-pw-wrap"><input id="reg-pw" type="password" required autocomplete="new-password" placeholder="Mínimo 6 caracteres"><button type="button" class="foro-pw-eye" onclick="togglePw(\'reg-pw\',this)" tabindex="-1" aria-label="Mostrar contraseña">' + _SVG_EYE + '</button></div></div>' +
+    '<div class="foro-field"><label>Repite contraseña</label><div class="foro-pw-wrap"><input id="reg-pw2" type="password" required autocomplete="new-password"><button type="button" class="foro-pw-eye" onclick="togglePw(\'reg-pw2\',this)" tabindex="-1" aria-label="Mostrar contraseña">' + _SVG_EYE + '</button></div></div>' +
     '<button class="foro-btn foro-btn-block" type="submit">Crear cuenta</button>' +
     '</form>' +
+    '<div id="form-forgot" style="display:none">' +
+    '<h3 class="foro-modal-title" style="margin-bottom:6px">Recuperar contraseña</h3>' +
+    '<p class="foro-modal-sub">Introduce tu email y te enviaremos un enlace para restablecerla.</p>' +
+    '<div class="foro-field"><label>Email</label><input id="forgot-email" type="email" autocomplete="email" placeholder="tu@email.com"></div>' +
+    '<button class="foro-btn foro-btn-block" type="button" onclick="handleForgotPw()">Enviar enlace</button>' +
+    '<p id="forgot-msg" style="min-height:18px;margin-top:10px;font-size:13px"></p>' +
+    '<p style="margin:12px 0 0;text-align:center"><button type="button" class="foro-link-btn" onclick="hideForgotForm()">← Volver al inicio de sesión</button></p>' +
+    '</div>' +
+    '</div></div>' +
+    '<div id="foro-reset-pw-modal" class="foro-overlay" style="display:none">' +
+    '<div class="foro-modal">' +
+    '<h3 class="foro-modal-title">Nueva contraseña</h3>' +
+    '<p class="foro-modal-sub">Elige una contraseña nueva para tu cuenta.</p>' +
+    '<div class="foro-field"><label>Nueva contraseña</label><div class="foro-pw-wrap"><input id="reset-pw" type="password" required autocomplete="new-password" placeholder="Mínimo 6 caracteres"><button type="button" class="foro-pw-eye" onclick="togglePw(\'reset-pw\',this)" tabindex="-1" aria-label="Mostrar contraseña">' + _SVG_EYE + '</button></div></div>' +
+    '<div class="foro-field"><label>Repite contraseña</label><div class="foro-pw-wrap"><input id="reset-pw2" type="password" required autocomplete="new-password"><button type="button" class="foro-pw-eye" onclick="togglePw(\'reset-pw2\',this)" tabindex="-1" aria-label="Mostrar contraseña">' + _SVG_EYE + '</button></div></div>' +
+    '<p id="reset-msg" class="foro-error" style="min-height:18px"></p>' +
+    '<button class="foro-btn foro-btn-block" type="button" onclick="handleNewPassword()">Guardar contraseña</button>' +
     '</div></div>' +
     '<div id="foro-username-modal" class="foro-overlay" style="display:none">' +
     '<div class="foro-modal">' +
@@ -144,6 +174,10 @@ async function initAuth() {
     if (event === 'SIGNED_IN') {
       hideAuthModal();
       if (!F.profile || !F.profile.username) showUsernameModal();
+    }
+    if (event === 'PASSWORD_RECOVERY') {
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+      showResetPwModal();
     }
   });
 }
@@ -243,6 +277,67 @@ function hideUsernameModal() {
   var m = document.getElementById('foro-username-modal');
   if (m) m.style.display = 'none';
 }
+function showForgotForm() {
+  var lf = document.getElementById('form-login');
+  var ff = document.getElementById('form-forgot');
+  var tabs = document.querySelector('.foro-modal-tabs');
+  var msg = document.getElementById('modal-msg');
+  if (lf) lf.style.display = 'none';
+  if (ff) ff.style.display = '';
+  if (tabs) tabs.style.display = 'none';
+  if (msg) msg.textContent = '';
+}
+function hideForgotForm() {
+  var lf = document.getElementById('form-login');
+  var ff = document.getElementById('form-forgot');
+  var tabs = document.querySelector('.foro-modal-tabs');
+  var fmsg = document.getElementById('forgot-msg');
+  if (lf) lf.style.display = '';
+  if (ff) ff.style.display = 'none';
+  if (tabs) tabs.style.display = '';
+  if (fmsg) fmsg.textContent = '';
+  switchTab('login');
+}
+async function handleForgotPw() {
+  var email = (document.getElementById('forgot-email').value || '').trim();
+  var msgEl = document.getElementById('forgot-msg');
+  if (!email) { msgEl.style.color = '#f87171'; msgEl.textContent = 'Introduce tu email.'; return; }
+  msgEl.style.color = 'var(--c-muted)'; msgEl.textContent = 'Enviando…';
+  var res = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: window.location.origin + '/foro/'
+  });
+  if (res.error) {
+    msgEl.style.color = '#f87171'; msgEl.textContent = res.error.message;
+  } else {
+    msgEl.style.color = '#22c55e';
+    msgEl.textContent = '¡Enlace enviado! Revisa tu bandeja de entrada (y el spam).';
+  }
+}
+function showResetPwModal() {
+  var m = document.getElementById('foro-reset-pw-modal');
+  if (m) m.style.display = 'flex';
+}
+function hideResetPwModal() {
+  var m = document.getElementById('foro-reset-pw-modal');
+  if (m) m.style.display = 'none';
+}
+async function handleNewPassword() {
+  var pw = document.getElementById('reset-pw').value;
+  var pw2 = document.getElementById('reset-pw2').value;
+  var msgEl = document.getElementById('reset-msg');
+  msgEl.className = 'foro-error'; msgEl.textContent = '';
+  if (pw.length < 6) { msgEl.textContent = 'Mínimo 6 caracteres.'; return; }
+  if (pw !== pw2) { msgEl.textContent = 'Las contraseñas no coinciden.'; return; }
+  msgEl.className = 'foro-meta-text'; msgEl.textContent = 'Guardando…';
+  var res = await sb.auth.updateUser({ password: pw });
+  if (res.error) {
+    msgEl.className = 'foro-error'; msgEl.textContent = res.error.message;
+  } else {
+    msgEl.className = 'foro-success'; msgEl.textContent = '¡Contraseña actualizada! Ya puedes usarla.';
+    setTimeout(hideResetPwModal, 2500);
+  }
+}
+
 async function handleLogin(e) {
   e.preventDefault();
   var msg = document.getElementById('modal-msg');
