@@ -20,6 +20,8 @@ var F = {
   catFilter: null,
   sort: 'new'
 };
+var _currentPost = null;
+var _currentPostImages = [];
 
 /* ── Utilidades ──────────────────────────────────────────────── */
 function esc(s) {
@@ -664,6 +666,58 @@ async function sortBy(s) {
   await renderPostList();
 }
 
+async function editPost() {
+  var p = _currentPost;
+  if (!p) return;
+  if (!F.categories.length) await loadCategories();
+  var el = document.getElementById('foro-post-area');
+  if (!el) return;
+  var catOptions = F.categories.map(function(c) {
+    return '<option value="' + c.id + '"' + (c.id === p.category_id ? ' selected' : '') + '>' +
+      esc(c.icon) + ' ' + esc(c.name) + '</option>';
+  }).join('');
+  el.innerHTML =
+    '<div class="foro-form-card">' +
+    '<p class="foro-section-title" style="margin-bottom:16px">Editar post</p>' +
+    '<form onsubmit="handleEditPost(event)">' +
+    '<div class="foro-field"><label>Categoría</label>' +
+    '<select id="edit-category" class="foro-select">' + catOptions + '</select></div>' +
+    '<div class="foro-field"><label>Título</label>' +
+    '<input id="edit-title" type="text" required minlength="5" maxlength="200" value="' + esc(p.title) + '"></div>' +
+    '<div class="foro-field"><label>Texto</label>' +
+    '<textarea id="edit-body" class="foro-textarea" required minlength="10" rows="10">' + esc(p.body) + '</textarea></div>' +
+    '<p id="edit-error" class="foro-error" style="min-height:18px"></p>' +
+    '<div style="display:flex;gap:12px;flex-wrap:wrap">' +
+    '<button class="foro-btn" type="submit" id="edit-save-btn">Guardar cambios</button>' +
+    '<button type="button" class="foro-btn-ghost" onclick="initForoPost()">Cancelar</button>' +
+    '</div></form></div>';
+}
+
+async function handleEditPost(e) {
+  e.preventDefault();
+  var p = _currentPost;
+  if (!p) return;
+  var errEl = document.getElementById('edit-error');
+  var btn = document.getElementById('edit-save-btn');
+  var catId = parseInt(document.getElementById('edit-category').value);
+  var title = document.getElementById('edit-title').value.trim();
+  var body = document.getElementById('edit-body').value.trim();
+  if (title.length < 5) { errEl.textContent = 'El título es demasiado corto (mín. 5 caracteres)'; return; }
+  if (body.length < 10) { errEl.textContent = 'El texto es demasiado corto (mín. 10 caracteres)'; return; }
+  btn.disabled = true; btn.textContent = 'Guardando…';
+  var res = await sb.from('posts').update({ title: title, body: body, category_id: catId }).eq('id', p.id);
+  if (res.error) {
+    errEl.textContent = 'Error: ' + res.error.message;
+    btn.disabled = false; btn.textContent = 'Guardar cambios'; return;
+  }
+  var cat = F.categories.find(function(c) { return c.id === catId; }) || p.categories;
+  _currentPost = Object.assign({}, p, { title: title, body: body, category_id: catId, categories: cat });
+  renderFullPost(_currentPost);
+  document.title = esc(title) + ' · Foro AJSpinning';
+  var galleryEl = document.getElementById('post-images-gallery');
+  if (galleryEl && _currentPostImages.length) galleryEl.innerHTML = renderPostGallery(_currentPostImages);
+}
+
 async function deletePost(postId) {
   if (!confirm('¿Seguro que quieres eliminar este post? Esta acción no se puede deshacer.')) return;
   var btn = document.querySelector('.foro-delete-btn');
@@ -696,6 +750,7 @@ async function initForoPost() {
   renderFullPost(post);
 
   var images = await loadPostImages(postId);
+  _currentPostImages = images;
   var galleryEl = document.getElementById('post-images-gallery');
   if (galleryEl && images.length) galleryEl.innerHTML = renderPostGallery(images);
 
@@ -705,12 +760,20 @@ async function initForoPost() {
 }
 
 function renderFullPost(p) {
+  _currentPost = p;
   var el = document.getElementById('foro-post-area');
   if (!el) return;
   var prf = p.profiles || {};
   var cat = p.categories || {};
+  var isAuthor = F.user && F.user.id === p.user_id;
   el.innerHTML =
     '<div class="foro-full-post">' +
+    (isAuthor
+      ? '<div class="foro-author-actions">' +
+        '<button class="foro-edit-btn" onclick="editPost()">✏️ Editar</button>' +
+        '<button class="foro-delete-btn" onclick="deletePost(\'' + esc(p.id) + '\')">🗑 Eliminar</button>' +
+        '</div>'
+      : '') +
     '<div class="foro-full-top"><span class="foro-badge">' + esc(cat.icon || '🎣') + ' ' + esc(cat.name || '') + '</span></div>' +
     '<h1 class="foro-full-title">' + esc(p.title) + '</h1>' +
     '<div class="foro-full-meta">' +
@@ -722,9 +785,6 @@ function renderFullPost(p) {
     '<div class="foro-full-actions" data-vote-wrap>' +
     '<button class="foro-vote-inline" id="post-vote-btn" data-id="' + esc(p.id) + '">▲ <span class="foro-vote-count">' + (p.upvotes || 0) + '</span> votos</button>' +
     '<span class="foro-meta-text">💬 <span id="post-comment-count">' + (p.comment_count || 0) + '</span> comentarios</span>' +
-    (F.user && F.user.id === p.user_id
-      ? '<button class="foro-delete-btn" onclick="deletePost(\'' + esc(p.id) + '\')">🗑 Eliminar post</button>'
-      : '') +
     '</div></div>';
 
   var btn = el.querySelector('#post-vote-btn');
