@@ -1235,11 +1235,7 @@ body {
 .article-side {
   position: sticky;
   top: 84px;
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
-  scrollbar-width: none;
 }
-.article-side::-webkit-scrollbar { display: none; }
 
 /* ─── ANIMATIONS ──────────────────────────────────── */
 @keyframes fadeSlideUp {
