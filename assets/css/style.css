@@ -93,7 +93,7 @@
   --shadow-s:     0 1px 3px rgba(13,34,53,.07), 0 1px 1px rgba(13,34,53,.05);
   --shadow-m:     0 6px 16px rgba(13,34,53,.10);
   --shadow-l:     0 14px 32px rgba(13,34,53,.14);
-  --max-w:        1200px;
+  --max-w:        1400px;
   --transition:   .2s cubic-bezier(.2,.8,.2,1);
   --motion-y:     8px;
 }
@@ -1196,7 +1196,7 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
    CATEGORÍAS GRID (home)
    ═══════════════════════════════════════════════════ */
 .cat-grid-section { padding: 76px 0 72px; }
-.cat-grid-section .container { max-width: 1320px; }
+.cat-grid-section .container { max-width: var(--max-w); }
 .section-title {
   font-family: var(--font-head); font-size: clamp(1.5rem, 3.5vw, 2.2rem);
   font-weight: 800; text-transform: none; letter-spacing: -.02em;
@@ -2437,7 +2437,7 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
   padding: 32px 0 14px;
 }
 .editorial-band .container {
-  max-width: 1320px;
+  max-width: var(--max-w);
 }
 .editorial-grid {
   display: grid;
@@ -3485,8 +3485,8 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
   font-size: .82rem; font-weight: 700;
 }
 .article-layout {
-  display: grid; grid-template-columns: minmax(0, 1fr) minmax(250px, 280px);
-  gap: 28px; align-items: start;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 330px);
+  gap: 32px; align-items: start;
 }
 .article-main {
   min-width: 0;
@@ -3494,7 +3494,7 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
   border: 1px solid var(--c-border);
   border-radius: var(--r-lg);
   box-shadow: var(--shadow-s);
-  padding: 26px 28px 34px;
+  padding: 28px 36px 36px;
 }
 .article-side {
   position: sticky; top: 88px;
