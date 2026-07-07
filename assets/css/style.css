@@ -2749,6 +2749,9 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
 .planner-promo p {
   color: var(--c-text-2);
 }
+.guide-section-title-on-dark {
+  color: #fff;
+}
 .mini-icon {
   width: 18px;
   height: 18px;
