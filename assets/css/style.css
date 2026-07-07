@@ -2599,8 +2599,21 @@ canvas, svg, video, iframe { display: block; max-width: 100%; }
 .library-hero-copy {
   max-width: 680px;
 }
+.library-hero-copy .breadcrumb {
+  justify-content: flex-start;
+  margin-bottom: 16px;
+}
 .library-hero-copy .cat-desc {
   margin: 0;
+}
+.library-hero-panel {
+  padding: 28px;
+}
+.library-hero-panel .mini-checklist {
+  margin-top: 16px;
+}
+.library-hero-panel .stack-actions {
+  margin-top: 20px;
 }
 .library-intro-grid {
   display: grid;
